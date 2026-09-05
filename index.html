@@ -662,10 +662,18 @@
                 <input type="password" id="setting-supabase-key" placeholder="eyJhbGciOi..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 font-mono">
               </div>
 
-              <div class="flex items-center gap-2 pt-2">
+              <div class="flex items-center gap-2 flex-wrap pt-2">
                 <button onclick="saveSettings()" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md">
                   <i data-lucide="save" class="w-4 h-4"></i>
                   حفظ بيانات Supabase
+                </button>
+                <button onclick="uploadToSupabaseUI()" class="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-emerald-600/20">
+                  <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                  رفع الكل إلى Supabase 📤
+                </button>
+                <button onclick="syncFromSupabaseUI()" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 border border-slate-200">
+                  <i data-lucide="download-cloud" class="w-4 h-4 text-emerald-600"></i>
+                  استيراد من Supabase 📥
                 </button>
               </div>
             </div>
@@ -2070,7 +2078,7 @@ function showToast(message, type = 'success') {
 
       const target = document.getElementById(`tab-${tabId}`);
       const btn = document.getElementById(`tab-btn-${tabId}`);
-      if (target) target.classList.remove('hidden');
+      if (target) { target.classList.remove('hidden'); if(tabId === 'settings') populateSettingsInputs(); }
       if (btn) {
         btn.classList.add('active', 'text-orange-700', 'bg-orange-50', 'border', 'border-orange-200', 'font-bold');
         btn.classList.remove('text-slate-600', 'hover:text-slate-900', 'hover:bg-slate-100', 'font-medium');
@@ -2642,6 +2650,75 @@ function showToast(message, type = 'success') {
     }
 
     // Settings save
+    
+    function populateSettingsInputs() {
+      const s = store.data.settings || {};
+      const webhookInp = document.getElementById('setting-webhook-url');
+      if (webhookInp && s.googleSheetWebhookUrl) webhookInp.value = s.googleSheetWebhookUrl;
+
+      const tgTokenInp = document.getElementById('setting-telegram-token');
+      if (tgTokenInp && s.telegramBotToken) tgTokenInp.value = s.telegramBotToken;
+
+      const tgChatInp = document.getElementById('setting-telegram-chatid');
+      if (tgChatInp && s.telegramChatId) tgChatInp.value = s.telegramChatId;
+
+      const spUrlInp = document.getElementById('setting-supabase-url');
+      if (spUrlInp && s.supabaseUrl) spUrlInp.value = s.supabaseUrl;
+
+      const spKeyInp = document.getElementById('setting-supabase-key');
+      if (spKeyInp && s.supabaseAnonKey) spKeyInp.value = s.supabaseAnonKey;
+
+      const refRateInp = document.getElementById('setting-ref-rate');
+      if (refRateInp && s.usdToDzdReferenceRate) refRateInp.value = s.usdToDzdReferenceRate;
+    }
+
+    async function uploadToSupabaseUI() {
+      saveSettings();
+      if (!store.supabase) {
+        alert('يرجى التأكد من إدخال رابط Project URL والمفتاح anon key لـ Supabase أولاً وحفظهما');
+        return;
+      }
+      showToast('جاري رفع كافة البيانات إلى Supabase...', 'info');
+      try {
+        const res = await store.supabase.from('ledger_state').upsert({
+          id: 'main_state',
+          data: store.data,
+          updated_at: new Date().toISOString()
+        });
+        if (res.error) {
+          alert('خطأ أثناء الرفع إلى Supabase: ' + res.error.message);
+        } else {
+          showToast('تم رفع كافة البيانات إلى قاعدة بيانات Supabase بنجاح!');
+        }
+      } catch (err) {
+        alert('خطأ في الاتصال بـ Supabase: ' + err.message);
+      }
+    }
+
+    async function syncFromSupabaseUI() {
+      saveSettings();
+      if (!store.supabase) {
+        alert('يرجى التأكد من إدخال رابط Project URL والمفتاح anon key لـ Supabase أولاً');
+        return;
+      }
+      showToast('جاري تحميل أحدث البيانات من Supabase...', 'info');
+      try {
+        const { data, error } = await store.supabase.from('ledger_state').select('data').eq('id', 'main_state').single();
+        if (error) {
+          alert('خطأ أثناء الجلب من Supabase: ' + error.message);
+        } else if (data && data.data) {
+          store.data = data.data;
+          store.saveData(false);
+          renderAll();
+          showToast('تم استيراد البيانات من Supabase وتحديث المنظومة بنجاح!');
+        } else {
+          alert('لا توجد بيانات مسجلة مسبقاً في جدول ledger_state');
+        }
+      } catch (err) {
+        alert('خطأ في الاتصال بـ Supabase: ' + err.message);
+      }
+    }
+
     function saveSettings() {
       const refRate = Number(document.getElementById('setting-ref-rate').value) || 250.9677;
       const webhookUrl = document.getElementById('setting-webhook-url').value.trim();
@@ -3010,6 +3087,7 @@ function showToast(message, type = 'success') {
       if (hName) hName.textContent = store.currentUser.name;
 
       store.subscribe(() => renderAll());
+      populateSettingsInputs();
       renderAll();
       if (window.lucide && typeof lucide.createIcons === "function") { try { lucide.createIcons(); } catch(e){} }
     });
