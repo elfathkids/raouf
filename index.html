@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>مؤسسة الفتح | منظومة إدارة الحسابات والصرف المالي</title>
+  
+  <!-- PWA Meta Tags & Icons -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f97316">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="الفتح El Feth">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="icon" type="image/png" href="logo.png">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Cairo Font (Google Fonts) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons & SheetJS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * { font-family: 'Cairo', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .card-shadow { box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03); }
+    .card-shadow-hover:hover { box-shadow: 0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.04); }
+    .badge-eur { background-color: #ecfeff; color: #0891b2; border: 1px solid #a5f3fc; }
+    .badge-usd { background-color: #faf5ff; color: #9333ea; border: 1px solid #e9d5ff; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen antialiased flex flex-col selection:bg-orange-500 selection:text-white">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-5 left-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ========================================== -->
+  <!-- 1. LOGIN SCREEN OVERLAY -->
+  <!-- ========================================== -->
+  <div id="login-overlay" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-8 border border-slate-200 card-shadow space-y-6">
+      
+      <!-- Brand Header -->
+      <div class="text-center space-y-3">
+        <div class="w-20 h-20 mx-auto rounded-3xl bg-white border-2 border-slate-100 p-2 shadow-lg flex items-center justify-center">
+          <img src="logo.png" alt="شعار مؤسسة الفتح" class="w-full h-full object-contain rounded-2xl">
+        </div>
+        <div>
+          <h2 class="text-xl font-black text-slate-900">مؤسسة الفتح (El Feth)</h2>
+          <p class="text-xs text-slate-500 font-semibold mt-1">منظومة الحسابات المالية والربط السحابي الذكي</p>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" onsubmit="handleLogin(event); return false;" class="space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-700 font-bold mb-1.5">اسم المستخدم أو الحساب:</label>
+          <div class="relative">
+            <input type="text" id="login-username" value="raouf" required placeholder="أدخل اسم المستخدم" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-slate-900 font-bold focus:bg-white focus:border-orange-500 focus:outline-none transition">
+            <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-700 font-bold mb-1.5">كلمة المرور (Password):</label>
+          <div class="relative">
+            <input type="password" id="login-password" value="00213966" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-slate-900 font-bold focus:bg-white focus:border-orange-500 focus:outline-none transition font-mono">
+            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-extrabold text-sm shadow-lg shadow-orange-500/25 transition transform active:scale-95 flex items-center justify-center gap-2">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          <span>تسجيل الدخول إلى النظام</span>
+        </button>
+
+        <!-- Quick 1-Click Entry for Admin -->
+        <button type="button" onclick="quickLoginAdmin()" class="w-full py-2.5 rounded-2xl bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 font-bold text-xs transition flex items-center justify-center gap-2">
+          <i data-lucide="zap" class="w-4 h-4 text-orange-600"></i>
+          <span>⚡ دخول سريع مباشر (المدير العام: رؤوف)</span>
+        </button>
+
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 text-center space-y-1">
+          <p class="text-[11px] text-slate-500 font-medium">البيانات الافتراضية:</p>
+          <div class="flex items-center justify-center gap-2 text-xs font-mono font-bold">
+            <span class="bg-white px-2 py-0.5 rounded-lg border border-slate-200 text-slate-700">المستخدم: raouf</span>
+            <span class="bg-white px-2 py-0.5 rounded-lg border border-slate-200 text-slate-700">الرمز: 00213966</span>
+          </div>
+        </div>
+      </form>
+
+      <!-- Developer Credit -->
+      <div class="text-center text-[11px] text-slate-400 pt-1">
+        برمجة وتطوير: <span class="font-bold font-mono text-slate-600">Aminebens_off</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 2. MAIN APPLICATION (WHEN LOGGED IN) -->
+  <!-- ========================================== -->
+  <div id="main-app" class="hidden flex-col min-h-screen">
+
+    <!-- Top Header Navigation -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 lg:px-8 py-3 shadow-sm">
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        
+        <!-- Brand Logo & Title -->
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200/80 p-1 flex items-center justify-center shadow-sm flex-shrink-0">
+            <img src="logo.png" alt="الفتح El Feth" class="w-full h-full object-contain rounded-xl">
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5">
+                <span>مؤسسة الفتح</span>
+                <span class="text-xs font-bold px-2 py-0.5 rounded-lg bg-cyan-50 text-cyan-700 border border-cyan-200">El Feth</span>
+              </h1>
+              <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200">2025 - 2026</span>
+            </div>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">دفتر حسابات استيراد ملابس الأطفال • تحصيلات الفروع وتحويلات الوسطاء</p>
+          </div>
+        </div>
+
+        <!-- Quick Actions & User Profile Header -->
+        <div class="flex items-center gap-2.5">
+          <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+            <div class="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-[10px]">
+              <i data-lucide="user" class="w-3.5 h-3.5"></i>
+            </div>
+            <span id="header-user-name" class="font-bold text-slate-800">المدير العام</span>
+          </div>
+
+          <button onclick="openModal('modal-quick-calc')" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 transition">
+            <i data-lucide="calculator" class="w-4 h-4 text-orange-600"></i>
+            حاسبة الصرف
+          </button>
+
+          <button onclick="exportToExcel()" class="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">تصدير</span> إكسل
+          </button>
+
+          <button onclick="handleLogout()" class="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition" title="تسجيل الخروج">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">خروج</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Navigation Tabs Bar -->
+      <div class="max-w-7xl mx-auto mt-3 flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar border-t border-slate-100 pt-2 text-xs sm:text-sm">
+        <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="tab-btn active flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition text-orange-700 bg-orange-50 border border-orange-200 whitespace-nowrap">
+          <i data-lucide="layout-dashboard" class="w-4 h-4 text-orange-600"></i>
+          لوحة التحكم الشاملة
+        </button>
+        <button onclick="switchTab('collections')" id="tab-btn-collections" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium transition text-slate-600 hover:text-slate-900 hover:bg-slate-100 whitespace-nowrap">
+          <i data-lucide="coins" class="w-4 h-4 text-emerald-600"></i>
+          1. استلامات الدينار من الفروع
+        </button>
+        <button onclick="switchTab('forex')" id="tab-btn-forex" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium transition text-slate-600 hover:text-slate-900 hover:bg-slate-100 whitespace-nowrap">
+          <i data-lucide="arrow-left-right" class="w-4 h-4 text-cyan-600"></i>
+          2. شراء العملات والوسطاء (Forex)
+        </button>
+        <button onclick="switchTab('suppliers')" id="tab-btn-suppliers" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium transition text-slate-600 hover:text-slate-900 hover:bg-slate-100 whitespace-nowrap">
+          <i data-lucide="building-2" class="w-4 h-4 text-purple-600"></i>
+          3. فواتير وديون المصانع ($)
+        </button>
+        <button onclick="switchTab('reports')" id="tab-btn-reports" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium transition text-slate-600 hover:text-slate-900 hover:bg-slate-100 whitespace-nowrap">
+          <i data-lucide="file-text" class="w-4 h-4 text-amber-600"></i>
+          4. كشوفات الحساب والفروع
+        </button>
+        <button onclick="switchTab('settings')" id="tab-btn-settings" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium transition text-slate-600 hover:text-slate-900 hover:bg-slate-100 whitespace-nowrap">
+          <i data-lucide="database" class="w-4 h-4 text-emerald-600"></i>
+          5. مزامنة Google Sheets و Supabase
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8 space-y-6">
+
+      <!-- ========================================== -->
+      <!-- TAB 1: DASHBOARD -->
+      <!-- ========================================== -->
+      <section id="tab-dashboard" class="tab-content space-y-6">
+        
+        <!-- 🌟 1. دورة العمليات المالية الثلاث (أعلى الصفحة مباشرة) -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200/80 card-shadow relative overflow-hidden bg-gradient-to-r from-orange-50/40 via-white to-cyan-50/40">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
+              <i data-lucide="sparkles" class="w-5 h-5 text-orange-500"></i>
+              دورة العمليات المالية الثلاث (إدخال سريع في أقل من 15 ثانية):
+            </h3>
+            <span class="hidden sm:inline text-xs font-bold text-slate-400">سجل عملياتك فورياً هنا ⚡</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <!-- زر 1: تحصيل دينار -->
+            <button onclick="openModal('modal-add-collection')" class="flex items-center gap-4 p-4 rounded-2xl bg-white hover:bg-emerald-50/80 border-2 border-emerald-100 hover:border-emerald-400 transition duration-200 text-right group card-shadow-hover">
+              <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition shadow-md shadow-emerald-600/30">
+                <i data-lucide="plus" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <div class="font-extrabold text-sm text-emerald-950">1. استلام مبالغ بالدينار</div>
+                <div class="text-xs text-emerald-700 mt-0.5">تسجيل ما دخل من الفروع (كاش أو تحويل)</div>
+              </div>
+            </button>
+
+            <!-- زر 2: شراء عملة أورو / دولار -->
+            <button onclick="openModal('modal-add-forex')" class="flex items-center gap-4 p-4 rounded-2xl bg-white hover:bg-cyan-50/80 border-2 border-cyan-100 hover:border-cyan-400 transition duration-200 text-right group card-shadow-hover">
+              <div class="w-12 h-12 rounded-2xl bg-cyan-600 text-white flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition shadow-md shadow-cyan-600/30">
+                <i data-lucide="arrow-up-right" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <div class="font-extrabold text-sm text-cyan-950">2. شراء أورو (€) / دولار ($)</div>
+                <div class="text-xs text-cyan-700 mt-0.5">تسجيل الصرف والوسيط واقتطاع الدينار</div>
+              </div>
+            </button>
+
+            <!-- زر 3: تسديد مصنع أو فاتورة -->
+            <button onclick="openModal('modal-add-invoice')" class="flex items-center gap-4 p-4 rounded-2xl bg-white hover:bg-purple-50/80 border-2 border-purple-100 hover:border-purple-400 transition duration-200 text-right group card-shadow-hover">
+              <div class="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition shadow-md shadow-purple-600/30">
+                <i data-lucide="file-plus-2" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <div class="font-extrabold text-sm text-purple-950">3. فاتورة سلعة / تسديد مصنع</div>
+                <div class="text-xs text-purple-700 mt-0.5">تسجيل فواتير المصانع وتقسيمها على الفروع</div>
+              </div>
+            </button>
+
+          </div>
+        </div>
+        
+        <!-- 🌟 2. Top Metrics 4 Cards Banner -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- Metric 1: DZD Reserve -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 card-shadow card-shadow-hover transition duration-200 relative overflow-hidden">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-slate-500">رصيد الدينار المتبقي (DZD)</span>
+              <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <i data-lucide="banknote" class="w-5 h-5"></i>
+              </div>
+            </div>
+            <div id="stat-dzd-reserve" class="text-2xl font-extrabold text-emerald-600 tracking-tight">0 دج</div>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
+              <span>المحصل: <b id="stat-dzd-collected" class="text-slate-800">0</b></span>
+              <span>المصروف: <b id="stat-dzd-used" class="text-slate-800">0</b></span>
+            </div>
+          </div>
+
+          <!-- Metric 2: Forex Purchased (EUR & USD) -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 card-shadow card-shadow-hover transition duration-200 relative overflow-hidden">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-slate-500">العملات الأجنبية المحولة (Forex)</span>
+              <div class="w-9 h-9 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
+                <i data-lucide="globe" class="w-5 h-5"></i>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <span id="stat-forex-eur" class="text-xl font-extrabold text-cyan-600 tracking-tight">€0.00</span>
+              <span class="text-slate-300">|</span>
+              <span id="stat-forex-usd" class="text-xl font-extrabold text-purple-600 tracking-tight">$0.00</span>
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
+              <span>الإجمالي بالدينار:</span>
+              <b id="stat-forex-dzd-total" class="text-slate-800 font-bold">0 دج</b>
+            </div>
+          </div>
+
+          <!-- Metric 3: Supplier Invoices (USD) -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 card-shadow card-shadow-hover transition duration-200 relative overflow-hidden">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-slate-500">إجمالي فواتير المصانع ($)</span>
+              <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                <i data-lucide="receipt" class="w-5 h-5"></i>
+              </div>
+            </div>
+            <div id="stat-invoices-usd" class="text-2xl font-extrabold text-purple-600 tracking-tight">$0.00</div>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
+              <span>المدفوع: <b id="stat-payments-usd" class="text-emerald-600 font-bold">$0.00</b></span>
+              <span>المصانع: <b id="stat-suppliers-count" class="text-slate-800 font-bold">0</b></span>
+            </div>
+          </div>
+
+          <!-- Metric 4: Net Balance / Rest a Payer -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 card-shadow card-shadow-hover transition duration-200 relative overflow-hidden">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-slate-500">المتبقي للدفع (Rest A Payer)</span>
+              <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                <i data-lucide="alert-circle" class="w-5 h-5"></i>
+              </div>
+            </div>
+            <div id="stat-net-debt-usd" class="text-2xl font-extrabold text-rose-600 tracking-tight">-$0.00</div>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
+              <span>المعادل بالدينار:</span>
+              <b id="stat-net-debt-dzd" class="text-rose-700 font-bold">0 دج</b>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 🌟 3. Branch Account Cards Grid -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="store" class="w-4 h-4 text-orange-600"></i>
+              كشف الأرصدة والمستحقات لكل فرع وشريك (الفتح)
+            </h2>
+            <span class="text-xs text-slate-500 font-medium">تحديث آلي مع كل حركة</span>
+          </div>
+
+          <div id="branches-summary-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 2: DZD COLLECTIONS -->
+      <!-- ========================================== -->
+      <section id="tab-collections" class="tab-content hidden space-y-4">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-slate-200/80 card-shadow">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="coins" class="w-5 h-5 text-emerald-600"></i>
+              سجل المبالغ المستلمة بالدينار من الفروع
+            </h2>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">تغذية صندوق الصرف لتحويلها لاحقاً إلى عملة أجنبية عبر الوسطاء</p>
+          </div>
+          <button onclick="openModal('modal-add-collection')" class="flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            تسجيل استلام دفعة جديدة
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl overflow-hidden border border-slate-200/80 card-shadow">
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-right text-xs">
+              <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase font-bold text-[11px]">
+                <tr>
+                  <th class="p-4">التاريخ</th>
+                  <th class="p-4">الوقت</th>
+                  <th class="p-4">الفرع المصدر</th>
+                  <th class="p-4">المبلغ بالدينار</th>
+                  <th class="p-4">طريقة الاستلام</th>
+                  <th class="p-4">ملاحظات</th>
+                  <th class="p-4 text-center">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="collections-table-body" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 3: FOREX & BROKERS (EUR & USD) -->
+      <!-- ========================================== -->
+      <section id="tab-forex" class="tab-content hidden space-y-4">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-slate-200/80 card-shadow">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="arrow-left-right" class="w-5 h-5 text-cyan-600"></i>
+              سجل شراء العملات الأجنبية عبر الوسطاء (EUR € & USD $)
+            </h2>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">تحويل الدينار إلى أورو (€) أو دولار ($) وتوزيع الخصم على الفروع</p>
+          </div>
+          <button onclick="openModal('modal-add-forex')" class="flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white shadow-md shadow-cyan-600/20 transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            تسجيل تحويل عملة جديد
+          </button>
+        </div>
+
+        <!-- Forex Summary Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-cyan-50/60 p-3.5 rounded-2xl border border-cyan-200 text-xs">
+            <span class="text-cyan-700 font-bold block">إجمالي الأورو (€):</span>
+            <span id="forex-card-eur" class="text-lg font-black text-cyan-900">€0.00</span>
+          </div>
+          <div class="bg-purple-50/60 p-3.5 rounded-2xl border border-purple-200 text-xs">
+            <span class="text-purple-700 font-bold block">إجمالي الدولار ($):</span>
+            <span id="forex-card-usd" class="text-lg font-black text-purple-900">$0.00</span>
+          </div>
+          <div class="bg-slate-100 p-3.5 rounded-2xl border border-slate-200 text-xs">
+            <span class="text-slate-600 font-bold block">المصروف بالدينار:</span>
+            <span id="forex-card-dzd" class="text-lg font-black text-slate-900">0 دج</span>
+          </div>
+          <div class="bg-emerald-50/60 p-3.5 rounded-2xl border border-emerald-200 text-xs">
+            <span class="text-emerald-700 font-bold block">المتبقي غير الموزع:</span>
+            <span id="forex-card-rest" class="text-lg font-black text-emerald-900">0 دج</span>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl overflow-hidden border border-slate-200/80 card-shadow">
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-right text-xs">
+              <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase font-bold text-[11px]">
+                <tr>
+                  <th class="p-4">التاريخ</th>
+                  <th class="p-4">الوسيط / المستلم</th>
+                  <th class="p-4">العملة & المبلغ</th>
+                  <th class="p-4">معامل الصرف</th>
+                  <th class="p-4">الإجمالي بالدينار</th>
+                  <th class="p-4">المقتطع من الفروع</th>
+                  <th class="p-4">المتبقي (Rest DZD)</th>
+                  <th class="p-4 text-center">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="forex-table-body" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 4: SUPPLIERS & FACTORY DEBTS (شحال خلصت وشحال بقات تسال) -->
+      <!-- ========================================== -->
+      <section id="tab-suppliers" class="tab-content hidden space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-slate-200/80 card-shadow">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="building-2" class="w-5 h-5 text-purple-600"></i>
+              كشف حسابات وديون المصانع التركية (الفواتير والمسدد والمتبقي)
+            </h2>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">متابعة دقيقة لكل مصنع: شحال عندو فواتير، شحال خلصناه، وشحال بقا يسال بالضبط</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="openModal('modal-add-payment')" class="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 transition">
+              <i data-lucide="credit-card" class="w-4 h-4"></i>
+              تسديد دفعة لمصنع
+            </button>
+            <button onclick="openModal('modal-add-invoice')" class="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 transition">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              إضافة فاتورة جديدة
+            </button>
+          </div>
+        </div>
+
+        <!-- Supplier Debts Summary Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-purple-50/60 p-4 rounded-2xl border border-purple-200">
+            <span class="text-xs text-purple-700 font-bold block">إجمالي الفواتير ($):</span>
+            <span id="sup-summary-total-invoices" class="text-xl font-extrabold text-purple-900">$0.00</span>
+          </div>
+          <div class="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200">
+            <span class="text-xs text-emerald-700 font-bold block">إجمالي المسدد ($):</span>
+            <span id="sup-summary-total-paid" class="text-xl font-extrabold text-emerald-900">$0.00</span>
+          </div>
+          <div class="bg-rose-50/60 p-4 rounded-2xl border border-rose-200">
+            <span class="text-xs text-rose-700 font-bold block">صافي الديون المتبقية:</span>
+            <span id="sup-summary-total-remaining" class="text-xl font-extrabold text-rose-900">$0.00</span>
+          </div>
+          <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200">
+            <span class="text-xs text-slate-600 font-bold block">المعادل بالدينار:</span>
+            <span id="sup-summary-total-remaining-dzd" class="text-xl font-extrabold text-slate-900">0 دج</span>
+          </div>
+        </div>
+
+        <!-- 🌟 جدول وضعية وديون الشركات والمصانع الرئيسية (شحال خلصت وشحال بقات تسال) -->
+        <div class="bg-white rounded-2xl overflow-hidden border border-slate-200/80 card-shadow">
+          <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+            <div class="flex items-center gap-2 font-bold text-xs sm:text-sm">
+              <i data-lucide="calculator" class="w-4 h-4 text-orange-400"></i>
+              وضعية ديون كل شركة ومصنع تركي (الفواتير - المسدد = الباقي)
+            </div>
+            <span class="text-xs text-slate-400 font-mono">حساب فوري مباشر</span>
+          </div>
+
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-right text-xs">
+              <thead class="bg-slate-100 text-slate-700 border-b border-slate-200 uppercase font-bold text-[11px]">
+                <tr>
+                  <th class="p-4">اسم المصنع / الشركة</th>
+                  <th class="p-4 text-purple-700">إجمالي الفواتير ($)</th>
+                  <th class="p-4 text-emerald-700">شحال خلصناها ($)</th>
+                  <th class="p-4 text-rose-700 font-black">شحال بقات تسال ($)</th>
+                  <th class="p-4 text-slate-700">المعادل بالدينار (DZD)</th>
+                  <th class="p-4 text-center">حالة الحساب</th>
+                  <th class="p-4 text-center">إجراء سريع</th>
+                </tr>
+              </thead>
+              <tbody id="factory-debts-table-body" class="divide-y divide-slate-100 text-slate-800 font-medium">
+                <!-- Dynamically populated with factory debts breakdown -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- تفاصيل الفواتير المسجلة -->
+        <div class="bg-white rounded-2xl overflow-hidden border border-slate-200/80 card-shadow">
+          <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <div class="text-xs font-bold text-slate-800 flex items-center gap-2">
+              <i data-lucide="receipt" class="w-4 h-4 text-purple-600"></i>
+              سجل فواتير السلع المفصل وتوزيعها على الفروع ($)
+            </div>
+            <div class="text-xs text-slate-600 font-semibold">إجمالي: <b id="supplier-invoices-total-badge" class="text-purple-700 font-bold">$0.00</b></div>
+          </div>
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-right text-xs">
+              <thead class="bg-slate-50/80 text-slate-600 border-b border-slate-200 uppercase font-bold text-[11px]">
+                <tr>
+                  <th class="p-4">التاريخ</th>
+                  <th class="p-4">اسم المصنع / المورد</th>
+                  <th class="p-4">حصة OGX ($)</th>
+                  <th class="p-4">حصة باتنة ($)</th>
+                  <th class="p-4">حصة البليدة ($)</th>
+                  <th class="p-4">حصة وهران ($)</th>
+                  <th class="p-4 text-purple-700 font-bold">المجموع الإجمالي ($)</th>
+                  <th class="p-4 text-center">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="suppliers-table-body" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- تفاصيل دفعات التسديد المسجلة -->
+        <div class="bg-white rounded-2xl overflow-hidden border border-slate-200/80 card-shadow">
+          <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <div class="text-xs font-bold text-slate-800 flex items-center gap-2">
+              <i data-lucide="credit-card" class="w-4 h-4 text-emerald-600"></i>
+              سجل دفعات التسديد المسددة للمصانع
+            </div>
+            <div class="text-xs text-slate-600 font-semibold">إجمالي المسدد: <b id="supplier-payments-total-badge" class="text-emerald-700 font-bold">$0.00</b></div>
+          </div>
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-right text-xs">
+              <thead class="bg-slate-50/80 text-slate-600 border-b border-slate-200 uppercase font-bold text-[11px]">
+                <tr>
+                  <th class="p-4">التاريخ</th>
+                  <th class="p-4">المصنع المستفيد</th>
+                  <th class="p-4 text-emerald-700 font-bold">المبلغ المسدد ($)</th>
+                  <th class="p-4">تخصيص OGX</th>
+                  <th class="p-4">تخصيص باتنة</th>
+                  <th class="p-4">تخصيص البليدة</th>
+                  <th class="p-4">تخصيص وهران</th>
+                  <th class="p-4">البيان والملاحظات</th>
+                  <th class="p-4 text-center">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="payments-table-body" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 5: COMPREHENSIVE REPORTS & LEDGERS -->
+      <!-- ========================================== -->
+      <section id="tab-reports" class="tab-content hidden space-y-6">
+        
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 card-shadow flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="file-text" class="w-5 h-5 text-amber-600"></i>
+              الكشف المالي الختامي والموقف الصافي للفروع (Final Ledger)
+            </h2>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">مقارنة مساهمات الدينار في الصرف مقابل حصص الفروع من فواتير السلع بالدولار</p>
+          </div>
+          <button onclick="exportToExcel()" class="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 transition">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            تصدير تقرير الإكسل الرسمي
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl overflow-hidden border border-slate-200/80 card-shadow">
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-right text-xs">
+              <thead class="bg-slate-900 text-white border-b border-slate-800 font-bold text-[11px]">
+                <tr>
+                  <th class="p-4">الفرع / المحل</th>
+                  <th class="p-4">المستهلك للصرف (DZD)</th>
+                  <th class="p-4">المسدد للمصانع ($)</th>
+                  <th class="p-4">فواتير السلع ($)</th>
+                  <th class="p-4">الرصيد الصافي ($)</th>
+                  <th class="p-4">الرصيد الصافي بالدينار</th>
+                  <th class="p-4">الوضعية المالية</th>
+                </tr>
+              </thead>
+              <tbody id="reports-table-body" class="divide-y divide-slate-100 text-slate-800 font-medium">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 6: SETTINGS & SYNC INTEGRATIONS -->
+      <!-- ========================================== -->
+      <section id="tab-settings" class="tab-content hidden space-y-6">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Card 1: Google Sheets Direct Integration -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200/80 card-shadow space-y-4">
+            <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0 border border-emerald-200">
+                <i data-lucide="sheet" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-slate-900 text-sm">التسجيل المباشر في Google Sheets</h3>
+                <p class="text-xs text-slate-500">مزامنة تلقائية لكافة الجداول الـ 5</p>
+              </div>
+            </div>
+
+            <div class="space-y-3 pt-2">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">رابط تطبيق Google Apps Script (Web App URL):</label>
+                <input type="text" id="setting-webhook-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white transition font-mono">
+              </div>
+
+              <div class="flex items-center gap-2 pt-2">
+                <button onclick="saveSettings()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-emerald-600/20">
+                  <i data-lucide="save" class="w-4 h-4"></i>
+                  حفظ رابط الشيت
+                </button>
+                <button onclick="store.autoSyncToGoogleSheets(); showToast('تم إرسال كامل الحسابات إلى Google Sheets بنجاح!');" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition flex items-center gap-1.5 border border-slate-200">
+                  <i data-lucide="refresh-cw" class="w-4 h-4 text-emerald-600"></i>
+                  إرسال يدوي الآن
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Telegram Bot Configuration -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200/80 card-shadow space-y-4">
+            <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div class="w-11 h-11 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center flex-shrink-0 border border-cyan-200">
+                <i data-lucide="send" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-slate-900 text-sm">إشعارات تيليغرام الفورية (Telegram VIP)</h3>
+                <p class="text-xs text-slate-500">إشعارات لحظية للمدير والمجموعة</p>
+              </div>
+            </div>
+
+            <div class="space-y-3 pt-2">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">رمز البوت (Telegram Bot Token):</label>
+                <input type="text" id="setting-telegram-token" placeholder="8520522099:AAFE..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 font-mono">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">معرف المحادثة أو المجموعة (Chat ID):</label>
+                <input type="text" id="setting-telegram-chatid" placeholder="-5254434205" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 font-mono">
+              </div>
+
+              <div class="flex items-center gap-2 pt-2">
+                <button onclick="saveSettings()" class="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-cyan-600/20">
+                  <i data-lucide="save" class="w-4 h-4"></i>
+                  حفظ إعدادات تيليغرام
+                </button>
+                <button onclick="store.testTelegramConnection()" class="px-4 py-2.5 rounded-xl bg-cyan-50 hover:bg-cyan-100 text-cyan-800 text-xs font-bold transition flex items-center gap-1.5 border border-cyan-200">
+                  <i data-lucide="send" class="w-4 h-4 text-cyan-600"></i>
+                  إرسال رسالة تجريبية
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Supabase Cloud DB -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200/80 card-shadow space-y-4">
+            <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0 border border-emerald-200">
+                <i data-lucide="database" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-slate-900 text-sm">قاعدة بيانات Supabase السحابية</h3>
+                <p class="text-xs text-slate-500">حفظ سحابي مشفر ودائم</p>
+              </div>
+            </div>
+
+            <div class="space-y-3 pt-2">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">رابط المشروع (Project URL):</label>
+                <input type="text" id="setting-supabase-url" placeholder="https://xxx.supabase.co" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 font-mono">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">المفتاح العام (anon key):</label>
+                <input type="password" id="setting-supabase-key" placeholder="eyJhbGciOi..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 font-mono">
+              </div>
+
+              <div class="flex items-center gap-2 pt-2">
+                <button onclick="saveSettings()" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md">
+                  <i data-lucide="save" class="w-4 h-4"></i>
+                  حفظ بيانات Supabase
+                </button>
+                <button onclick="store.uploadAllToSupabase()" class="px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition flex items-center gap-1.5 border border-emerald-200">
+                  <i data-lucide="cloud-upload" class="w-4 h-4 text-emerald-600"></i>
+                  رفع البيانات الآن
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 4: Currency Settings & Backups -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200/80 card-shadow space-y-4">
+            <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div class="w-11 h-11 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center flex-shrink-0 border border-orange-200">
+                <i data-lucide="settings" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-slate-900 text-sm">إعدادات الصرف والنسخ الاحتياطي</h3>
+                <p class="text-xs text-slate-500">معامل التحويل القياسي للدينار</p>
+              </div>
+            </div>
+
+            <div class="space-y-3 pt-2">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">معامل تحويل الدولار المرجعي (USD to DZD):</label>
+                <input type="number" step="0.01" id="setting-ref-rate" value="250.9677" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition">
+                <span class="text-[11px] text-slate-500 font-medium">المعامل المعتمد: 250.9677 دج لكل 1 دولار</span>
+              </div>
+
+              <div class="flex items-end gap-2 flex-wrap pt-2">
+                <button onclick="exportBackupJson()" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 border border-slate-200">
+                  <i data-lucide="download" class="w-4 h-4 text-orange-600"></i>
+                  تنزيل نسخة احتياطية
+                </button>
+                <button onclick="document.getElementById('import-file-input').click()" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 border border-slate-200">
+                  <i data-lucide="upload" class="w-4 h-4 text-emerald-600"></i>
+                  استيراد نسخة
+                </button>
+                <input type="file" id="import-file-input" accept=".json" class="hidden" onchange="importBackupJson(event)">
+                <button onclick="resetDataWithConfirm()" class="px-3.5 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition flex items-center gap-1.5 border border-rose-200">
+                  <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                  إعادة ضبط
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- FOOTER WITH BRAND & AMINEBENS_OFF CREDITS -->
+    <!-- ========================================== -->
+    <footer class="mt-auto bg-white border-t border-slate-200/80 py-5 px-4 text-center text-xs text-slate-500">
+      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <img src="logo.png" alt="الفتح El Feth" class="w-5 h-5 object-contain">
+          <span class="font-bold text-slate-700">مؤسسة الفتح (El Feth)</span>
+          <span>• استيراد وتوزيع ملابس الأطفال © 2025 - 2026</span>
+        </div>
+        <div class="flex items-center gap-1.5 text-[11px] font-semibold bg-slate-100 px-3 py-1 rounded-full border border-slate-200 text-slate-700">
+          <span>برمجة وتطوير:</span>
+          <span class="text-orange-600 font-extrabold tracking-wide font-mono">Aminebens_off</span>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODALS (ADD & EDIT SYSTEM) -->
+  <!-- ========================================== -->
+
+  <!-- Modal 1: Add / Edit DZD Collection -->
+  <div id="modal-add-collection" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 border border-slate-200 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 id="modal-collection-title" class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="coins" class="w-5 h-5 text-emerald-600"></i>
+          تسجيل استلام مبالغ بالدينار (DZD)
+        </h3>
+        <button onclick="closeModal('modal-add-collection')" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <form id="form-add-collection" onsubmit="handleSaveCollection(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="col-edit-id" value="">
+        <div>
+          <label class="block text-slate-700 font-bold mb-1">الفرع المصدر:</label>
+          <select id="col-branch" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-slate-700 font-bold mb-1">المبلغ بالدينار الجزائري (DZD):</label>
+          <input type="number" id="col-amount" required placeholder="مثال: 5000000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 text-sm font-extrabold focus:bg-white focus:border-emerald-600 focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">التاريخ:</label>
+            <input type="date" id="col-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">طريقة الدفع:</label>
+            <select id="col-method" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-medium">
+              <option value="cash">كاش (سيولة)</option>
+              <option value="baridimob">بريدي موب</option>
+              <option value="bank">تحويل بنكي</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-700 font-bold mb-1">ملاحظات أو بيان:</label>
+          <input type="text" id="col-notes" placeholder="مثلاً: دفعة لتغطية طلبية سوي دان" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none">
+        </div>
+
+        <div class="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modal-add-collection')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition">إلغاء</button>
+          <button type="submit" id="btn-submit-collection" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20 transition">حفظ الدفعة</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Add / Edit Forex Transfer via Broker (EUR & USD) -->
+  <div id="modal-add-forex" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 border border-slate-200 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 id="modal-forex-title" class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="arrow-left-right" class="w-5 h-5 text-cyan-600"></i>
+          تسجيل شراء عملة وتحويل عبر وسيط
+        </h3>
+        <button onclick="closeModal('modal-add-forex')" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <form id="form-add-forex" onsubmit="handleSaveForex(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="forex-edit-id" value="">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">اسم الوسيط / الصراف:</label>
+            <input type="text" id="forex-broker" required placeholder="مثال: هشام (HICH)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">المستلم بالخارج (Receiver):</label>
+            <input type="text" id="forex-receiver" placeholder="مثال: mtl" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">العملة:</label>
+            <select id="forex-currency" onchange="calcForexTotal()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold">
+              <option value="EUR">أورو (€ - EUR)</option>
+              <option value="USD">دولار ($ - USD)</option>
+              <option value="TRY">ليرة (₺ - TRY)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">المبلغ المحول:</label>
+            <input type="number" step="any" id="forex-amount" required oninput="calcForexTotal()" placeholder="مثال: 20000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-extrabold focus:bg-white">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">سعر الصرف (DZD):</label>
+            <input type="number" step="any" id="forex-rate" required oninput="calcForexTotal()" placeholder="مثال: 289" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-extrabold focus:bg-white">
+          </div>
+        </div>
+
+        <div class="p-3.5 bg-cyan-50/80 rounded-2xl border border-cyan-200 flex items-center justify-between">
+          <span class="text-cyan-900 font-bold">الإجمالي بالدينار الجزائري:</span>
+          <span id="forex-calculated-dzd" class="text-base font-extrabold text-cyan-700">0 دج</span>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100">
+          <label class="block text-slate-800 font-bold mb-2">توزيع اقتطاع الدينار على الفروع الممولة للتحويل:</label>
+          <div id="forex-branch-inputs" class="grid grid-cols-2 gap-2.5">
+            <!-- Dynamically populated with branch DZD inputs -->
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">التاريخ:</label>
+            <input type="date" id="forex-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">ملاحظة سريعة:</label>
+            <input type="text" id="forex-notes" placeholder="مثال: دفعة الشحنة #4" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800">
+          </div>
+        </div>
+
+        <div class="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modal-add-forex')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition">إلغاء</button>
+          <button type="submit" id="btn-submit-forex" class="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold shadow-md shadow-cyan-600/20 transition">حفظ التحويل</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Add / Edit Supplier Invoice -->
+  <div id="modal-add-invoice" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 border border-slate-200 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 id="modal-invoice-title" class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="building-2" class="w-5 h-5 text-purple-600"></i>
+          تسجيل فاتورة مصنع وتوزيعها على الفروع
+        </h3>
+        <button onclick="closeModal('modal-add-invoice')" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <form id="form-add-invoice" onsubmit="handleSaveInvoice(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="inv-edit-id" value="">
+        <div>
+          <label class="block text-slate-700 font-bold mb-1">المصنع / المورد:</label>
+          <input type="text" id="inv-supplier-name" required placeholder="مثال: Soydan, Mutlu, Elsima, Civil..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold focus:bg-white">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">المبلغ الإجمالي بالفاتورة ($):</label>
+            <input type="number" step="any" id="inv-total-usd" required placeholder="مثال: 12500" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-extrabold text-sm focus:bg-white">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">رقم الفاتورة / الكود:</label>
+            <input type="text" id="inv-number" placeholder="مثال: INV-2026-01" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800">
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100">
+          <label class="block text-slate-800 font-bold mb-2">توزيع حصص الفروع من هذه الفاتورة ($):</label>
+          <div id="invoice-branch-inputs" class="grid grid-cols-2 gap-2.5">
+            <!-- Dynamically populated with branch USD inputs -->
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">التاريخ:</label>
+            <input type="date" id="inv-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">ملاحظة:</label>
+            <input type="text" id="inv-notes" placeholder="مثلاً: كوليهات شتاء 2026" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800">
+          </div>
+        </div>
+
+        <div class="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modal-add-invoice')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition">إلغاء</button>
+          <button type="submit" id="btn-submit-invoice" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-md shadow-purple-600/20 transition">حفظ الفاتورة</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 4: Add / Edit Supplier Payment (تسديد دفعة لمصنع) -->
+  <div id="modal-add-payment" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 border border-slate-200 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 id="modal-payment-title" class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="credit-card" class="w-5 h-5 text-emerald-600"></i>
+          تسجيل دفعة تسديد لمصنع (Payment)
+        </h3>
+        <button onclick="closeModal('modal-add-payment')" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <form id="form-add-payment" onsubmit="handleSavePayment(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="pay-edit-id" value="">
+        <div>
+          <label class="block text-slate-700 font-bold mb-1">المصنع المستفيد:</label>
+          <select id="pay-supplier-id" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold focus:bg-white">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">المبلغ المسدد ($ USD):</label>
+            <input type="number" step="any" id="pay-total-usd" required placeholder="مثال: 5000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-extrabold text-sm focus:bg-white">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">تاريخ الدفع:</label>
+            <input type="date" id="pay-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800">
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100">
+          <label class="block text-slate-800 font-bold mb-2">تخصيص الخصم من حساب الفروع ($):</label>
+          <div id="payment-branch-inputs" class="grid grid-cols-2 gap-2.5">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-700 font-bold mb-1">ملاحظات التحويل:</label>
+          <input type="text" id="pay-notes" placeholder="مثلاً: دفعة تسديد عبر الحساب التركي" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800">
+        </div>
+
+        <div class="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modal-add-payment')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition">إلغاء</button>
+          <button type="submit" id="btn-submit-payment" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20 transition">حفظ الدفعة</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 5: Quick Cross-Currency Calculator -->
+  <div id="modal-quick-calc" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 border border-slate-200 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="calculator" class="w-5 h-5 text-orange-600"></i>
+          حاسبة الصرف المتقاطع (EUR <-> USD <-> DZD)
+        </h3>
+        <button onclick="closeModal('modal-quick-calc')" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-3.5 text-xs">
+        <div>
+          <label class="block text-slate-700 font-bold mb-1">فاتورة المورد بالدولار ($):</label>
+          <input type="number" step="any" id="calc-usd" oninput="runCrossCalc('usd')" placeholder="مثال: 10000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-extrabold text-sm focus:bg-white">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">معامل الصرف (EUR/USD Cross):</label>
+            <input type="number" step="0.001" id="calc-cross-rate" value="1.085" oninput="runCrossCalc('rate')" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">سعر الأورو بالدينار (DZD):</label>
+            <input type="number" step="0.1" id="calc-eur-dzd" value="289" oninput="runCrossCalc('rate')" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold">
+          </div>
+        </div>
+
+        <div class="p-4 bg-orange-50/80 rounded-2xl border border-orange-200 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-600">المعادل بالأورو الواجب تحويله:</span>
+            <span id="calc-res-eur" class="font-bold text-cyan-700 font-mono">€0.00</span>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-600">التكلفة الإجمالية بالدينار الجزائري:</span>
+            <span id="calc-res-dzd" class="font-extrabold text-slate-900 font-mono text-sm">0 دج</span>
+          </div>
+          <div class="flex justify-between items-center text-[11px] pt-1 border-t border-orange-200/60">
+            <span class="text-slate-500">سعر الدولار الفعلي المستنتج:</span>
+            <span id="calc-res-usd-rate" class="font-bold text-orange-700 font-mono">0.00 دج/$</span>
+          </div>
+        </div>
+
+        <button type="button" onclick="closeModal('modal-quick-calc')" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Application Logic Script -->
+  <script src="app.js"></script>
+  
+  <!-- Interactive UI Controller Script -->
+  <script>
+    // Tab switching
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('active', 'text-orange-700', 'bg-orange-50', 'border', 'border-orange-200', 'font-bold');
+        el.classList.add('text-slate-600', 'hover:text-slate-900', 'hover:bg-slate-100', 'font-medium');
+      });
+
+      const target = document.getElementById(`tab-${tabId}`);
+      const btn = document.getElementById(`tab-btn-${tabId}`);
+      if (target) target.classList.remove('hidden');
+      if (btn) {
+        btn.classList.add('active', 'text-orange-700', 'bg-orange-50', 'border', 'border-orange-200', 'font-bold');
+        btn.classList.remove('text-slate-600', 'hover:text-slate-900', 'hover:bg-slate-100', 'font-medium');
+      }
+      lucide.createIcons();
+    }
+
+    // Modal helpers
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove('hidden');
+        el.classList.add('flex');
+        populateDynamicModalInputs();
+      }
+      lucide.createIcons();
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+        // reset edit id
+        const editIdInputs = el.querySelectorAll('input[type="hidden"]');
+        editIdInputs.forEach(inp => inp.value = '');
+      }
+    }
+
+    // Auth handlers
+    function quickLoginAdmin() {
+      const uInp = document.getElementById('login-username');
+      const pInp = document.getElementById('login-password');
+      if (uInp) uInp.value = 'raouf';
+      if (pInp) pInp.value = '00213966';
+      handleLogin();
+    }
+
+    function handleLogin(e) {
+      if (e && typeof e.preventDefault === 'function') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      const u = (document.getElementById('login-username')?.value || '').trim();
+      const p = (document.getElementById('login-password')?.value || '').trim();
+
+      const ok = store.login(u, p);
+      if (ok) {
+        document.getElementById('login-overlay').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        document.getElementById('main-app').classList.add('flex');
+        const hName = document.getElementById('header-user-name');
+        if (hName && store.currentUser) {
+          hName.textContent = store.currentUser.name;
+        }
+        try {
+          renderAll();
+        } catch (err) {
+          console.error('Render error:', err);
+        }
+        if (typeof showToast === 'function') {
+          showToast(`مرحباً بك ${store.currentUser ? store.currentUser.name : ''}`);
+        }
+      } else {
+        alert('اسم المستخدم أو كلمة المرور غير صحيحة. يرجى إدخال raouf و 00213966');
+      }
+      return false;
+    }
+
+    function handleLogout() {
+      if (confirm('هل تريد تسجيل الخروج؟')) {
+        store.logout();
+        document.getElementById('main-app').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('flex');
+        document.getElementById('login-overlay').classList.remove('hidden');
+      }
+    }
+
+    // Dynamic modal populator
+    function populateDynamicModalInputs() {
+      const branches = store.data.branches || [];
+      const suppliers = store.data.suppliers || [];
+      const today = new Date().toISOString().split('T')[0];
+
+      // 1. Collection Branch Select
+      const colSelect = document.getElementById('col-branch');
+      if (colSelect && colSelect.children.length === 0) {
+        colSelect.innerHTML = branches.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+      }
+      const colDate = document.getElementById('col-date');
+      if (colDate && !colDate.value) colDate.value = today;
+
+      // 2. Forex Branch Inputs
+      const fxContainer = document.getElementById('forex-branch-inputs');
+      if (fxContainer && fxContainer.children.length === 0) {
+        fxContainer.innerHTML = branches.map(b => `
+          <div>
+            <label class="block text-[11px] text-slate-600 mb-0.5 font-bold">${b.name}:</label>
+            <input type="number" id="forex-br-${b.id}" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 font-bold focus:bg-white">
+          </div>
+        `).join('');
+      }
+      const fxDate = document.getElementById('forex-date');
+      if (fxDate && !fxDate.value) fxDate.value = today;
+
+      // 3. Invoice Branch Inputs
+      const invContainer = document.getElementById('invoice-branch-inputs');
+      if (invContainer && invContainer.children.length === 0) {
+        invContainer.innerHTML = branches.map(b => `
+          <div>
+            <label class="block text-[11px] text-slate-600 mb-0.5 font-bold">${b.name} ($):</label>
+            <input type="number" step="any" id="inv-br-${b.id}" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 font-bold focus:bg-white">
+          </div>
+        `).join('');
+      }
+      const invDate = document.getElementById('inv-date');
+      if (invDate && !invDate.value) invDate.value = today;
+
+      // 4. Payment Supplier Select & Branch Inputs
+      const paySelect = document.getElementById('pay-supplier-id');
+      if (paySelect) {
+        paySelect.innerHTML = suppliers.map(s => `<option value="${s.id}">${s.name} (${s.country || 'تركيا'})</option>`).join('');
+      }
+      const payBranchContainer = document.getElementById('payment-branch-inputs');
+      if (payBranchContainer && payBranchContainer.children.length === 0) {
+        payBranchContainer.innerHTML = branches.map(b => `
+          <div>
+            <label class="block text-[11px] text-slate-600 mb-0.5 font-bold">${b.name} ($):</label>
+            <input type="number" step="any" id="pay-br-${b.id}" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 font-bold focus:bg-white">
+          </div>
+        `).join('');
+      }
+      const payDate = document.getElementById('pay-date');
+      if (payDate && !payDate.value) payDate.value = today;
+    }
+
+    // ==========================================
+    // RENDER ALL DATA AND TABLES
+    // ==========================================
+    function renderAll() {
+      const calc = store.getCalculations();
+      const { branches, dzdCollections, forexTransfers, supplierInvoices, supplierPayments, suppliers, settings } = store.data;
+
+      // 1. Dashboard Top Stat Cards
+      document.getElementById('stat-dzd-reserve').textContent = formatDzd(calc.dzdReserveBalance);
+      document.getElementById('stat-dzd-collected').textContent = formatDzd(calc.totalDzdCollected);
+      document.getElementById('stat-dzd-used').textContent = formatDzd(calc.totalDzdUsedForForex);
+
+      document.getElementById('stat-forex-eur').textContent = formatEur(calc.totalForexEur);
+      document.getElementById('stat-forex-usd').textContent = formatUsd(calc.totalForexUsd);
+      document.getElementById('stat-forex-dzd-total').textContent = formatDzd(calc.totalDzdUsedForForex);
+
+      document.getElementById('stat-invoices-usd').textContent = formatUsd(calc.totalInvoicesUsd);
+      document.getElementById('stat-payments-usd').textContent = formatUsd(calc.totalPaymentsUsd);
+      document.getElementById('stat-suppliers-count').textContent = suppliers.length;
+
+      document.getElementById('stat-net-debt-usd').textContent = formatUsd(Math.abs(calc.netDebtTotalUsd));
+      document.getElementById('stat-net-debt-dzd').textContent = formatDzd(Math.abs(calc.netDebtTotalDzd));
+
+      // 2. Forex Tab Summary Cards
+      const fxEurCard = document.getElementById('forex-card-eur');
+      if (fxEurCard) fxEurCard.textContent = formatEur(calc.totalForexEur);
+      const fxUsdCard = document.getElementById('forex-card-usd');
+      if (fxUsdCard) fxUsdCard.textContent = formatUsd(calc.totalForexUsd);
+      const fxDzdCard = document.getElementById('forex-card-dzd');
+      if (fxDzdCard) fxDzdCard.textContent = formatDzd(calc.totalDzdUsedForForex);
+      const fxRestCard = document.getElementById('forex-card-rest');
+      if (fxRestCard) fxRestCard.textContent = formatDzd(calc.dzdReserveBalance);
+
+      // 3. Branches Summary Grid
+      const branchGrid = document.getElementById('branches-summary-grid');
+      branchGrid.innerHTML = branches.map(b => {
+        const stat = calc.branchStats[b.id] || {};
+        const isDebt = stat.netDebtUsd < 0;
+        return `
+          <div class="bg-white rounded-2xl p-4 border border-slate-200/80 card-shadow card-shadow-hover transition duration-200 relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-${b.color}-500 shadow-sm"></span>
+                ${b.name}
+              </span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isDebt ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">
+                ${isDebt ? 'مدين للمصانع' : 'خالص'}
+              </span>
+            </div>
+            
+            <div class="space-y-1 text-xs text-slate-600 mt-2">
+              <div class="flex justify-between">
+                <span>المحصل دينار:</span>
+                <b class="text-slate-900">${formatDzd(stat.dzdCollected)}</b>
+              </div>
+              <div class="flex justify-between">
+                <span>المصروف للصرف:</span>
+                <b class="text-slate-900">${formatDzd(stat.dzdUsedForForex)}</b>
+              </div>
+              <div class="flex justify-between">
+                <span>فواتير السلع:</span>
+                <b class="text-purple-700">${formatUsd(stat.invoicesUsd)}</b>
+              </div>
+              <div class="flex justify-between">
+                <span>المسدد للمصانع:</span>
+                <b class="text-emerald-700">${formatUsd(stat.paymentsUsd)}</b>
+              </div>
+            </div>
+
+            <div class="mt-3 pt-2 border-t border-slate-100 flex justify-between items-center text-xs">
+              <span class="font-bold text-slate-700">الصافي:</span>
+              <span class="font-extrabold ${isDebt ? 'text-rose-600' : 'text-emerald-600'}">${formatUsd(stat.netDebtUsd)} (${formatDzd(stat.netDebtDzd)})</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 4. Collections Table
+      const colBody = document.getElementById('collections-table-body');
+      if (dzdCollections.length === 0) {
+        colBody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">لا توجد تحصيلات مسجلة بعد</td></tr>`;
+      } else {
+        colBody.innerHTML = dzdCollections.map(c => {
+          const branch = branches.find(b => b.id === c.branchId) || { name: c.branchId };
+          return `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="p-4 font-mono font-bold">${c.date}</td>
+              <td class="p-4 font-mono text-slate-500">${c.time || '--:--'}</td>
+              <td class="p-4 font-bold text-slate-900">${branch.name}</td>
+              <td class="p-4 font-extrabold text-emerald-600">${formatDzd(c.amountDzd)}</td>
+              <td class="p-4"><span class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-bold">${c.paymentMethod === 'cash' ? 'كاش' : c.paymentMethod}</span></td>
+              <td class="p-4 text-slate-500 text-xs">${c.notes || '-'}</td>
+              <td class="p-4 text-center">
+                <div class="flex items-center justify-center gap-1">
+                  <button onclick="editCollection('${c.id}')" class="p-1.5 text-slate-400 hover:text-cyan-600 rounded-lg hover:bg-slate-100 transition" title="تعديل">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                  </button>
+                  <button onclick="deleteCollection('${c.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 transition" title="حذف">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 5. Forex Table
+      const fxBody = document.getElementById('forex-table-body');
+      if (forexTransfers.length === 0) {
+        fxBody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-400">لا توجد عمليات صرف مسجلة بعد</td></tr>`;
+      } else {
+        fxBody.innerHTML = forexTransfers.map(f => {
+          const broker = (store.data.brokers || []).find(b => b.id === f.brokerId) || { name: f.brokerId };
+          const contribs = Object.entries(f.branchContributions || {}).map(([bId, amt]) => {
+            const b = branches.find(x => x.id === bId) || { name: bId };
+            return `${b.name}: ${formatDzd(amt)}`;
+          }).join(' | ') || 'غير موزع';
+
+          const currBadge = f.currency === 'USD' ? 'badge-usd' : 'badge-eur';
+          const formattedAmt = f.currency === 'USD' ? formatUsd(f.amountForeign) : formatEur(f.amountForeign);
+
+          return `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="p-4 font-mono font-bold">${f.date}</td>
+              <td class="p-4 font-bold text-slate-900">${broker.name} <span class="text-slate-400 text-xs">(${f.receiver || 'مستلم'})</span></td>
+              <td class="p-4"><span class="px-2.5 py-1 rounded-lg text-xs font-black ${currBadge}">${formattedAmt}</span></td>
+              <td class="p-4 font-mono font-bold">${f.exchangeRateDzd} دج</td>
+              <td class="p-4 font-extrabold text-slate-900">${formatDzd(f.totalDzd)}</td>
+              <td class="p-4 text-[11px] text-slate-600">${contribs}</td>
+              <td class="p-4 font-bold text-emerald-600">${formatDzd(f.restDzd)}</td>
+              <td class="p-4 text-center">
+                <div class="flex items-center justify-center gap-1">
+                  <button onclick="editForex('${f.id}')" class="p-1.5 text-slate-400 hover:text-cyan-600 rounded-lg hover:bg-slate-100 transition" title="تعديل">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                  </button>
+                  <button onclick="deleteForex('${f.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 transition" title="حذف">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 6. Factory Debts Ledger Table (شحال خلصت وشحال بقات تسال)
+      const factoryDebtsBody = document.getElementById('factory-debts-table-body');
+      const refRate = settings.usdToDzdReferenceRate || 250.9677;
+
+      let totalInvAll = 0;
+      let totalPaidAll = 0;
+
+      const factoryRows = suppliers.map(sup => {
+        let supInvTotal = 0;
+        supplierInvoices.forEach(inv => {
+          if (inv.supplierId === sup.id) supInvTotal += Number(inv.totalAmountUsd) || 0;
+        });
+
+        let supPaidTotal = 0;
+        supplierPayments.forEach(pay => {
+          if (pay.supplierId === sup.id) supPaidTotal += Number(pay.totalPaidUsd) || 0;
+        });
+
+        const remaining = supInvTotal - supPaidTotal;
+        const remainingDzd = remaining * refRate;
+        const isSettled = remaining <= 0 && (supInvTotal > 0 || supPaidTotal > 0);
+
+        totalInvAll += supInvTotal;
+        totalPaidAll += supPaidTotal;
+
+        if (supInvTotal === 0 && supPaidTotal === 0) return '';
+
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="p-4 font-extrabold text-slate-900 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full ${remaining > 0 ? 'bg-rose-500' : 'bg-emerald-500'}"></span>
+              ${sup.name}
+            </td>
+            <td class="p-4 text-purple-700 font-extrabold">${formatUsd(supInvTotal)}</td>
+            <td class="p-4 text-emerald-700 font-extrabold">${formatUsd(supPaidTotal)}</td>
+            <td class="p-4 font-black ${remaining > 0 ? 'text-rose-600' : 'text-emerald-600'}">${formatUsd(remaining)}</td>
+            <td class="p-4 font-bold text-slate-700">${formatDzd(remainingDzd)}</td>
+            <td class="p-4 text-center">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isSettled ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
+                ${isSettled ? 'خالص بالكامل ✅' : 'باقي يسال 🔴'}
+              </span>
+            </td>
+            <td class="p-4 text-center">
+              <button onclick="openPaymentForSupplier('${sup.id}')" class="px-3 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition flex items-center gap-1 mx-auto">
+                <i data-lucide="credit-card" class="w-3.5 h-3.5 text-emerald-600"></i>
+                تسديد دفعة
+              </button>
+            </td>
+          </tr>
+        `;
+      }).filter(r => r !== '').join('');
+
+      factoryDebtsBody.innerHTML = factoryRows || `<tr><td colspan="7" class="p-8 text-center text-slate-400">لا توجد حسابات مصانع مسجلة بعد</td></tr>`;
+
+      // Update Top Badges in Suppliers Tab
+      const remainingAll = totalInvAll - totalPaidAll;
+      document.getElementById('sup-summary-total-invoices').textContent = formatUsd(totalInvAll);
+      document.getElementById('sup-summary-total-paid').textContent = formatUsd(totalPaidAll);
+      document.getElementById('sup-summary-total-remaining').textContent = formatUsd(remainingAll);
+      document.getElementById('sup-summary-total-remaining-dzd').textContent = formatDzd(remainingAll * refRate);
+
+      // 7. Supplier Invoices Table
+      const supBody = document.getElementById('suppliers-table-body');
+      document.getElementById('supplier-invoices-total-badge').textContent = formatUsd(calc.totalInvoicesUsd);
+      
+      if (supplierInvoices.length === 0) {
+        supBody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-400">لا توجد فواتير مسجلة</td></tr>`;
+      } else {
+        supBody.innerHTML = supplierInvoices.map(inv => {
+          const sup = suppliers.find(s => s.id === inv.supplierId) || { name: inv.supplierId };
+          const shares = inv.branchSharesUsd || {};
+          return `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="p-4 font-mono font-bold">${inv.date}</td>
+              <td class="p-4 font-extrabold text-slate-900">
+                ${sup.name}
+                <div class="text-[11px] text-slate-400 font-normal">${inv.invoiceNumber ? 'كود: ' + inv.invoiceNumber : ''} ${inv.notes ? '• ' + inv.notes : ''}</div>
+              </td>
+              <td class="p-4 text-slate-700 font-semibold">${shares.ogx ? formatUsd(shares.ogx) : '-'}</td>
+              <td class="p-4 text-slate-700 font-semibold">${shares.batna ? formatUsd(shares.batna) : '-'}</td>
+              <td class="p-4 text-slate-700 font-semibold">${shares.blida ? formatUsd(shares.blida) : '-'}</td>
+              <td class="p-4 text-slate-700 font-semibold">${shares.oran ? formatUsd(shares.oran) : '-'}</td>
+              <td class="p-4 font-extrabold text-purple-700">${formatUsd(inv.totalAmountUsd)}</td>
+              <td class="p-4 text-center">
+                <div class="flex items-center justify-center gap-1">
+                  <button onclick="editInvoice('${inv.id}')" class="p-1.5 text-slate-400 hover:text-purple-600 rounded-lg hover:bg-slate-100 transition" title="تعديل">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                  </button>
+                  <button onclick="deleteInvoice('${inv.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 transition" title="حذف">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 8. Supplier Payments Table
+      const payBody = document.getElementById('payments-table-body');
+      document.getElementById('supplier-payments-total-badge').textContent = formatUsd(calc.totalPaymentsUsd);
+
+      if (supplierPayments.length === 0) {
+        payBody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400">لا توجد تسديدات مسجلة بعد</td></tr>`;
+      } else {
+        payBody.innerHTML = supplierPayments.map(p => {
+          const sup = suppliers.find(s => s.id === p.supplierId) || { name: p.supplierId || 'المصنع' };
+          const alloc = p.branchAllocationsUsd || {};
+          return `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="p-4 font-mono font-bold">${p.date}</td>
+              <td class="p-4 font-extrabold text-slate-900">${sup.name}</td>
+              <td class="p-4 font-extrabold text-emerald-700">${formatUsd(p.totalPaidUsd)}</td>
+              <td class="p-4 text-slate-700">${alloc.ogx ? formatUsd(alloc.ogx) : '-'}</td>
+              <td class="p-4 text-slate-700">${alloc.batna ? formatUsd(alloc.batna) : '-'}</td>
+              <td class="p-4 text-slate-700">${alloc.blida ? formatUsd(alloc.blida) : '-'}</td>
+              <td class="p-4 text-slate-700">${alloc.oran ? formatUsd(alloc.oran) : '-'}</td>
+              <td class="p-4 text-slate-500 text-xs">${p.notes || '-'}</td>
+              <td class="p-4 text-center">
+                <div class="flex items-center justify-center gap-1">
+                  <button onclick="editPayment('${p.id}')" class="p-1.5 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-slate-100 transition" title="تعديل">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                  </button>
+                  <button onclick="deletePayment('${p.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 transition" title="حذف">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 9. Render Reports Ledger Table
+      const repBody = document.getElementById('reports-table-body');
+      repBody.innerHTML = branches.map(b => {
+        const stat = calc.branchStats[b.id] || {};
+        const isDebt = stat.netDebtUsd < 0;
+        return `
+          <tr class="hover:bg-slate-50 transition font-medium">
+            <td class="p-4 font-bold text-slate-900 flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-${b.color}-500 shadow-sm"></span>
+              ${b.name}
+            </td>
+            <td class="p-4 text-slate-800 font-bold">${formatDzd(stat.dzdUsedForForex)}</td>
+            <td class="p-4 text-cyan-700 font-bold">${formatUsd(stat.paymentsUsd)}</td>
+            <td class="p-4 text-purple-700 font-bold">${formatUsd(stat.invoicesUsd)}</td>
+            <td class="p-4 font-extrabold ${isDebt ? 'text-rose-600' : 'text-emerald-600'}">${formatUsd(stat.netDebtUsd)}</td>
+            <td class="p-4 font-extrabold ${isDebt ? 'text-rose-600' : 'text-emerald-600'}">${formatDzd(stat.netDebtDzd)}</td>
+            <td class="p-4">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isDebt ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">
+                ${isDebt ? 'مطلوب للسداد' : 'خالص'}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      repBody.innerHTML += `
+        <tr class="bg-slate-100 font-extrabold text-slate-900 border-t-2 border-slate-300">
+          <td class="p-4">المجموع الكلي</td>
+          <td class="p-4 text-slate-900">${formatDzd(calc.totalDzdUsedForForex)}</td>
+          <td class="p-4 text-cyan-700">${formatUsd(calc.totalPaymentsUsd)}</td>
+          <td class="p-4 text-purple-700">${formatUsd(calc.totalInvoicesUsd)}</td>
+          <td class="p-4 text-rose-600">${formatUsd(calc.netDebtTotalUsd)}</td>
+          <td class="p-4 text-rose-600">${formatDzd(calc.netDebtTotalDzd)}</td>
+          <td class="p-4 text-slate-500 font-bold">صافي الحساب</td>
+        </tr>
+      `;
+
+      // 10. Update settings inputs
+      document.getElementById('setting-ref-rate').value = settings.usdToDzdReferenceRate || 250.9677;
+      document.getElementById('setting-webhook-url').value = settings.googleSheetWebhookUrl || '';
+      document.getElementById('setting-supabase-url').value = settings.supabaseUrl || '';
+      document.getElementById('setting-supabase-key').value = settings.supabaseAnonKey || '';
+      document.getElementById('setting-telegram-token').value = settings.telegramBotToken || '';
+      document.getElementById('setting-telegram-chatid').value = settings.telegramChatId || '';
+
+      lucide.createIcons();
+    }
+
+    // ==========================================
+    // FORM SUBMISSIONS (ADD & EDIT)
+    // ==========================================
+
+    // 1. Collection
+    function handleSaveCollection(e) {
+      e.preventDefault();
+      const editId = document.getElementById('col-edit-id').value;
+      const branchId = document.getElementById('col-branch').value;
+      const amountDzd = Number(document.getElementById('col-amount').value) || 0;
+      const date = document.getElementById('col-date').value;
+      const paymentMethod = document.getElementById('col-method').value;
+      const notes = document.getElementById('col-notes').value;
+
+      if (editId) {
+        store.updateDzdCollection(editId, { branchId, amountDzd, date, paymentMethod, notes });
+        showToast('تم تحديث الدفعة بنجاح!');
+      } else {
+        store.addDzdCollection({ branchId, amountDzd, date, paymentMethod, notes });
+        showToast('تم تسجيل استلام الدينار والمزامنة بنجاح!');
+      }
+
+      closeModal('modal-add-collection');
+      e.target.reset();
+    }
+
+    function editCollection(id) {
+      const c = store.data.dzdCollections.find(x => x.id === id);
+      if (!c) return;
+      openModal('modal-add-collection');
+      document.getElementById('col-edit-id').value = c.id;
+      document.getElementById('col-branch').value = c.branchId;
+      document.getElementById('col-amount').value = c.amountDzd;
+      document.getElementById('col-date').value = c.date;
+      document.getElementById('col-method').value = c.paymentMethod;
+      document.getElementById('col-notes').value = c.notes || '';
+      document.getElementById('modal-collection-title').innerHTML = `<i data-lucide="edit-3" class="w-5 h-5 text-cyan-600"></i> تعديل دفعة استلام دينار`;
+      document.getElementById('btn-submit-collection').textContent = 'تحديث التعديلات';
+      lucide.createIcons();
+    }
+
+    // 2. Forex
+    function calcForexTotal() {
+      const amount = Number(document.getElementById('forex-amount').value) || 0;
+      const rate = Number(document.getElementById('forex-rate').value) || 0;
+      const total = amount * rate;
+      document.getElementById('forex-calculated-dzd').textContent = formatDzd(total);
+    }
+
+    function handleSaveForex(e) {
+      e.preventDefault();
+      const editId = document.getElementById('forex-edit-id').value;
+      const brokerId = document.getElementById('forex-broker').value;
+      const receiver = document.getElementById('forex-receiver').value;
+      const currency = document.getElementById('forex-currency').value;
+      const amountForeign = Number(document.getElementById('forex-amount').value) || 0;
+      const exchangeRateDzd = Number(document.getElementById('forex-rate').value) || 0;
+      const date = document.getElementById('forex-date').value;
+      const notes = document.getElementById('forex-notes').value;
+
+      const branchContributions = {};
+      store.data.branches.forEach(b => {
+        const val = Number(document.getElementById(`forex-br-${b.id}`)?.value) || 0;
+        if (val > 0) branchContributions[b.id] = val;
+      });
+
+      if (editId) {
+        store.updateForexTransfer(editId, {
+          brokerId, receiver, currency, amountForeign, exchangeRateDzd,
+          branchContributions, date, notes
+        });
+        showToast('تم تحديث عملية الصرف بنجاح!');
+      } else {
+        store.addForexTransfer({
+          brokerId, receiver, currency, amountForeign, exchangeRateDzd,
+          branchContributions, date, notes
+        });
+        showToast('تم حفظ التحويل والمزامنة بنجاح!');
+      }
+
+      closeModal('modal-add-forex');
+      e.target.reset();
+    }
+
+    function editForex(id) {
+      const f = store.data.forexTransfers.find(x => x.id === id);
+      if (!f) return;
+      openModal('modal-add-forex');
+      document.getElementById('forex-edit-id').value = f.id;
+      document.getElementById('forex-broker').value = f.brokerId;
+      document.getElementById('forex-receiver').value = f.receiver || '';
+      document.getElementById('forex-currency').value = f.currency || 'EUR';
+      document.getElementById('forex-amount').value = f.amountForeign;
+      document.getElementById('forex-rate').value = f.exchangeRateDzd;
+      document.getElementById('forex-date').value = f.date;
+      document.getElementById('forex-notes').value = f.notes || '';
+      calcForexTotal();
+
+      store.data.branches.forEach(b => {
+        const inp = document.getElementById(`forex-br-${b.id}`);
+        if (inp) inp.value = f.branchContributions?.[b.id] || '';
+      });
+
+      document.getElementById('modal-forex-title').innerHTML = `<i data-lucide="edit-3" class="w-5 h-5 text-cyan-600"></i> تعديل عملية تحويل وصرف`;
+      document.getElementById('btn-submit-forex').textContent = 'تحديث التعديلات';
+      lucide.createIcons();
+    }
+
+    // 3. Invoice
+    function handleSaveInvoice(e) {
+      e.preventDefault();
+      const editId = document.getElementById('inv-edit-id').value;
+      const supplierName = document.getElementById('inv-supplier-name').value;
+      const totalAmountUsd = Number(document.getElementById('inv-total-usd').value) || 0;
+      const invoiceNumber = document.getElementById('inv-number').value;
+      const date = document.getElementById('inv-date').value;
+      const notes = document.getElementById('inv-notes').value;
+
+      let supplier = store.data.suppliers.find(s => s.name.toLowerCase() === supplierName.trim().toLowerCase());
+      let supplierId = supplier ? supplier.id : store.addSupplier(supplierName);
+
+      const branchSharesUsd = {};
+      store.data.branches.forEach(b => {
+        const val = Number(document.getElementById(`inv-br-${b.id}`)?.value) || 0;
+        if (val > 0) branchSharesUsd[b.id] = val;
+      });
+
+      if (editId) {
+        store.updateSupplierInvoice(editId, {
+          supplierId, totalAmountUsd, invoiceNumber, date, notes, branchSharesUsd
+        });
+        showToast('تم تحديث الفاتورة بنجاح!');
+      } else {
+        store.addSupplierInvoice({
+          supplierId, totalAmountUsd, invoiceNumber, date, notes, branchSharesUsd
+        });
+        showToast('تم حفظ فاتورة المصنع والمزامنة بنجاح!');
+      }
+
+      closeModal('modal-add-invoice');
+      e.target.reset();
+    }
+
+    function editInvoice(id) {
+      const inv = store.data.supplierInvoices.find(x => x.id === id);
+      if (!inv) return;
+      openModal('modal-add-invoice');
+      const sup = store.data.suppliers.find(s => s.id === inv.supplierId);
+      document.getElementById('inv-edit-id').value = inv.id;
+      document.getElementById('inv-supplier-name').value = sup ? sup.name : inv.supplierId;
+      document.getElementById('inv-total-usd').value = inv.totalAmountUsd;
+      document.getElementById('inv-number').value = inv.invoiceNumber || '';
+      document.getElementById('inv-date').value = inv.date;
+      document.getElementById('inv-notes').value = inv.notes || '';
+
+      store.data.branches.forEach(b => {
+        const inp = document.getElementById(`inv-br-${b.id}`);
+        if (inp) inp.value = inv.branchSharesUsd?.[b.id] || '';
+      });
+
+      document.getElementById('modal-invoice-title').innerHTML = `<i data-lucide="edit-3" class="w-5 h-5 text-purple-600"></i> تعديل فاتورة المصنع`;
+      document.getElementById('btn-submit-invoice').textContent = 'تحديث التعديلات';
+      lucide.createIcons();
+    }
+
+    // 4. Payment
+    function handleSavePayment(e) {
+      e.preventDefault();
+      const editId = document.getElementById('pay-edit-id').value;
+      const supplierId = document.getElementById('pay-supplier-id').value;
+      const totalPaidUsd = Number(document.getElementById('pay-total-usd').value) || 0;
+      const date = document.getElementById('pay-date').value;
+      const notes = document.getElementById('pay-notes').value;
+
+      const branchAllocationsUsd = {};
+      store.data.branches.forEach(b => {
+        const val = Number(document.getElementById(`pay-br-${b.id}`)?.value) || 0;
+        if (val > 0) branchAllocationsUsd[b.id] = val;
+      });
+
+      if (editId) {
+        store.updateSupplierPayment(editId, {
+          supplierId, totalPaidUsd, date, notes, branchAllocationsUsd
+        });
+        showToast('تم تحديث دفعة التسديد بنجاح!');
+      } else {
+        store.addSupplierPayment({
+          supplierId, totalPaidUsd, date, notes, branchAllocationsUsd
+        });
+        showToast('تم تسجيل تسديد المصنع بنجاح!');
+      }
+
+      closeModal('modal-add-payment');
+      e.target.reset();
+    }
+
+    function editPayment(id) {
+      const p = store.data.supplierPayments.find(x => x.id === id);
+      if (!p) return;
+      openModal('modal-add-payment');
+      document.getElementById('pay-edit-id').value = p.id;
+      document.getElementById('pay-supplier-id').value = p.supplierId;
+      document.getElementById('pay-total-usd').value = p.totalPaidUsd;
+      document.getElementById('pay-date').value = p.date;
+      document.getElementById('pay-notes').value = p.notes || '';
+
+      store.data.branches.forEach(b => {
+        const inp = document.getElementById(`pay-br-${b.id}`);
+        if (inp) inp.value = p.branchAllocationsUsd?.[b.id] || '';
+      });
+
+      document.getElementById('modal-payment-title').innerHTML = `<i data-lucide="edit-3" class="w-5 h-5 text-emerald-600"></i> تعديل دفعة تسديد مصنع`;
+      document.getElementById('btn-submit-payment').textContent = 'تحديث التعديلات';
+      lucide.createIcons();
+    }
+
+    function openPaymentForSupplier(supplierId) {
+      openModal('modal-add-payment');
+      document.getElementById('pay-supplier-id').value = supplierId;
+    }
+
+    // Delete handlers
+    function deleteCollection(id) {
+      if (confirm('هل أنت متأكد من حذف هذه الدفعة؟')) {
+        store.deleteDzdCollection(id);
+        showToast('تم حذف الدفعة');
+      }
+    }
+
+    function deleteForex(id) {
+      if (confirm('هل أنت متأكد من حذف هذا التحويل؟')) {
+        store.deleteForexTransfer(id);
+        showToast('تم حذف التحويل');
+      }
+    }
+
+    function deleteInvoice(id) {
+      if (confirm('هل أنت متأكد من حذف هذه الفاتورة؟')) {
+        store.deleteSupplierInvoice(id);
+        showToast('تم حذف الفاتورة');
+      }
+    }
+
+    function deletePayment(id) {
+      if (confirm('هل أنت متأكد من حذف هذه الدفعة المسددة؟')) {
+        store.deleteSupplierPayment(id);
+        showToast('تم حذف الدفعة');
+      }
+    }
+
+    // Cross Calc
+    function runCrossCalc(source) {
+      const usdAmount = Number(document.getElementById('calc-usd').value) || 0;
+      const crossRate = Number(document.getElementById('calc-cross-rate').value) || 1.085;
+      const eurDzdRate = Number(document.getElementById('calc-eur-dzd').value) || 289;
+
+      const eurAmount = usdAmount / crossRate;
+      const totalDzd = eurAmount * eurDzdRate;
+      const effectiveUsdRate = usdAmount > 0 ? (totalDzd / usdAmount) : 0;
+
+      document.getElementById('calc-res-eur').textContent = formatEur(eurAmount);
+      document.getElementById('calc-res-dzd').textContent = formatDzd(totalDzd);
+      document.getElementById('calc-res-usd-rate').textContent = formatNumber(effectiveUsdRate, 2) + ' دج/$';
+    }
+
+    // Settings save
+    function saveSettings() {
+      const refRate = Number(document.getElementById('setting-ref-rate').value) || 250.9677;
+      const webhookUrl = document.getElementById('setting-webhook-url').value.trim();
+      const supabaseUrl = document.getElementById('setting-supabase-url').value.trim();
+      const supabaseKey = document.getElementById('setting-supabase-key').value.trim();
+      const tgToken = document.getElementById('setting-telegram-token').value.trim();
+      const tgChatId = document.getElementById('setting-telegram-chatid').value.trim();
+
+      store.updateSettings({
+        usdToDzdReferenceRate: refRate,
+        googleSheetWebhookUrl: webhookUrl,
+        supabaseUrl: supabaseUrl,
+        supabaseAnonKey: supabaseKey,
+        telegramBotToken: tgToken,
+        telegramChatId: tgChatId
+      });
+
+      showToast('تم حفظ الإعدادات بنجاح!');
+    }
+
+    // Export Excel
+    function exportToExcel() {
+      const wb = XLSX.utils.book_new();
+      const calc = store.getCalculations();
+
+      const reportRows = [
+        ['مؤسسة الفتح (El Feth) - الكشف المالي الشامل للفروع'],
+        ['تاريخ التصدير', new Date().toLocaleDateString('ar-DZ')],
+        [],
+        ['الفرع / المحل', 'المستهلك للصرف DZD', 'المسدد للمصانع USD', 'فواتير السلع USD', 'الرصيد الصافي USD', 'الرصيد الصافي DZD', 'الوضعية'],
+        ...store.data.branches.map(b => {
+          const s = calc.branchStats[b.id] || {};
+          return [b.name, s.dzdUsedForForex, s.paymentsUsd, s.invoicesUsd, s.netDebtUsd, s.netDebtDzd, s.netDebtUsd < 0 ? 'مدين' : 'دائن'];
+        }),
+        ['المجموع الكلي', calc.totalDzdUsedForForex, calc.totalPaymentsUsd, calc.totalInvoicesUsd, calc.netDebtTotalUsd, calc.netDebtTotalDzd, '']
+      ];
+      const wsReport = XLSX.utils.aoa_to_sheet(reportRows);
+      XLSX.utils.book_append_sheet(wb, wsReport, 'الكشف المالي');
+
+      const colRows = [
+        ['التاريخ', 'الوقت', 'الفرع', 'المبلغ بالدينار', 'طريقة الدفع', 'ملاحظات'],
+        ...store.data.dzdCollections.map(c => [
+          c.date, c.time || '', (store.data.branches.find(b => b.id === c.branchId) || {}).name || c.branchId, c.amountDzd, c.paymentMethod, c.notes
+        ])
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(colRows), 'استلامات الدينار');
+
+      const fxRows = [
+        ['التاريخ', 'الوقت', 'الوسيط', 'المستلم', 'العملة', 'المبلغ بالعملة', 'سعر الصرف', 'الإجمالي بالدينار', 'المتبقي DZD', 'ملاحظات'],
+        ...store.data.forexTransfers.map(f => [
+          f.date, f.time || '', (store.data.brokers.find(b => b.id === f.brokerId) || {}).name || f.brokerId, f.receiver, f.currency, f.amountForeign, f.exchangeRateDzd, f.totalDzd, f.restDzd, f.notes
+        ])
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(fxRows), 'صرف العملات Forex');
+
+      const invRows = [
+        ['التاريخ', 'المصنع', 'رقم الفاتورة', 'المجموع USD', 'حصة OGX', 'حصة باتنة', 'حصة البليدة', 'حصة وهران', 'ملاحظات'],
+        ...store.data.supplierInvoices.map(i => [
+          i.date, (store.data.suppliers.find(s => s.id === i.supplierId) || {}).name || i.supplierId, i.invoiceNumber, i.totalAmountUsd, i.branchSharesUsd?.ogx || 0, i.branchSharesUsd?.batna || 0, i.branchSharesUsd?.blida || 0, i.branchSharesUsd?.oran || 0, i.notes
+        ])
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(invRows), 'فواتير المصانع');
+
+      const payRows = [
+        ['التاريخ', 'المصنع', 'المبلغ المسدد USD', 'تخصيص OGX', 'تخصيص باتنة', 'تخصيص البليدة', 'تخصيص وهران', 'ملاحظات'],
+        ...store.data.supplierPayments.map(p => [
+          p.date, (store.data.suppliers.find(s => s.id === p.supplierId) || {}).name || p.supplierId, p.totalPaidUsd, p.branchAllocationsUsd?.ogx || 0, p.branchAllocationsUsd?.batna || 0, p.branchAllocationsUsd?.blida || 0, p.branchAllocationsUsd?.oran || 0, p.notes
+        ])
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(payRows), 'تسديدات المصانع');
+
+      XLSX.writeFile(wb, `مؤسسة_الفتح_كشف_الحسابات_${new Date().toISOString().split('T')[0]}.xlsx`);
+      showToast('تم تصدير ملف الإكسل بنجاح!');
+    }
+
+    // Backup & Restore
+    function exportBackupJson() {
+      const dataStr = JSON.stringify(store.data, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `el_feth_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      showToast('تم تنزيل النسخة الاحتياطية بنجاح!');
+    }
+
+    function importBackupJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed && parsed.branches) {
+            store.data = parsed;
+            store.saveData();
+            renderAll();
+            showToast('تم استيراد النسخة الاحتياطية بنجاح!');
+          } else {
+            alert('ملف النسخة الاحتياطية غير صالح');
+          }
+        } catch(err) {
+          alert('خطأ في قراءة ملف JSON');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetDataWithConfirm() {
+      if (confirm('هل أنت متأكد من إعادة ضبط المنظومة للبيانات الأولية؟ سيتم مسح أي تعديلات غير محفوظة سحابياً.')) {
+        store.resetToDefault();
+        renderAll();
+        showToast('تمت إعادة ضبط البيانات بنجاح!');
+      }
+    }
+
+    // App Initialization
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      store.subscribe(() => renderAll());
+
+      if (store.currentUser) {
+        document.getElementById('login-overlay').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        document.getElementById('main-app').classList.add('flex');
+        document.getElementById('header-user-name').textContent = store.currentUser.name;
+        renderAll();
+      } else {
+        document.getElementById('login-overlay').classList.remove('hidden');
+        document.getElementById('main-app').classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
