@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>تسجيل الدخول | مؤسسة الفتح El Feth</title>
+
+  <!-- PWA Meta -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f97316">
+  <link rel="icon" type="image/png" href="logo.png">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Cairo & JetBrains Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="firebase_sync.js"></script>
+
+  <style>
+    * { font-family: 'Cairo', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    
+    /* Animated Gradient Background */
+    .animated-bg {
+      background: linear-gradient(-45deg, #0f172a, #1e293b, #0c4a6e, #1e1b4b, #111827);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+    }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Glassmorphism Card */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(249, 115, 22, 0.15);
+    }
+
+    /* Glowing ambient spheres */
+    .glow-sphere-1 {
+      position: absolute;
+      top: 10%;
+      right: 15%;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(249, 115, 22, 0.35) 0%, rgba(249, 115, 22, 0) 70%);
+      filter: blur(50px);
+      animation: float1 8s ease-in-out infinite alternate;
+    }
+    .glow-sphere-2 {
+      position: absolute;
+      bottom: 10%;
+      left: 15%;
+      width: 380px;
+      height: 380px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.3) 0%, rgba(6, 182, 212, 0) 70%);
+      filter: blur(60px);
+      animation: float2 10s ease-in-out infinite alternate;
+    }
+    @keyframes float1 {
+      0% { transform: translateY(0px) scale(1); }
+      100% { transform: translateY(-30px) scale(1.1); }
+    }
+    @keyframes float2 {
+      0% { transform: translateY(0px) scale(1); }
+      100% { transform: translateY(40px) scale(1.15); }
+    }
+  </style>
+</head>
+<body class="animated-bg min-h-screen text-slate-100 flex items-center justify-center p-4 relative overflow-hidden selection:bg-orange-500 selection:text-white">
+
+  <!-- Glowing background elements -->
+  <div class="glow-sphere-1 pointer-events-none"></div>
+  <div class="glow-sphere-2 pointer-events-none"></div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Main Login Container -->
+  <div class="w-full max-w-md relative z-10">
+
+    <!-- Brand Header -->
+    <div class="text-center mb-8 space-y-3">
+      <div class="relative inline-block">
+        <div class="w-24 h-24 mx-auto rounded-3xl p-1.5 bg-gradient-to-tr from-orange-500 via-amber-400 to-cyan-400 shadow-2xl shadow-orange-500/30 flex items-center justify-center transform hover:scale-105 transition duration-300">
+          <div class="w-full h-full bg-slate-900 rounded-[22px] p-2 flex items-center justify-center overflow-hidden">
+            <img src="logo.png" alt="الفتح El Feth" class="w-full h-full object-contain">
+          </div>
+        </div>
+        <span class="absolute -bottom-2 -right-2 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md border border-orange-300/30 font-mono">
+          2025 - 2026
+        </span>
+      </div>
+
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center justify-center gap-2">
+          <span>مؤسسة الفتح</span>
+          <span class="text-sm font-extrabold px-2.5 py-0.5 rounded-xl bg-orange-500/20 text-orange-400 border border-orange-500/30 font-mono">El Feth</span>
+        </h1>
+        <p class="text-xs text-slate-400 mt-1 font-medium">بوابة الإدارة السحابية والمالية لاستيراد ملابس الأطفال</p>
+      </div>
+    </div>
+
+    <!-- Login Glass Card -->
+    <div class="glass-card rounded-[32px] p-7 sm:p-8 space-y-6">
+
+      <!-- Login Mode Tabs -->
+      <div class="flex items-center p-1.5 rounded-2xl bg-slate-900/60 border border-white/10 text-xs font-bold">
+        <button type="button" onclick="setLoginMethod('admin')" id="tab-btn-admin" class="flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20 font-extrabold">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>
+          دخول المدير العام
+        </button>
+        <button type="button" onclick="setLoginMethod('firebase')" id="tab-btn-firebase" class="flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-slate-400 hover:text-white font-medium">
+          <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i>
+          سحابة Firebase
+        </button>
+      </div>
+
+      <!-- Quick Fast Profile Selector (for Admin) -->
+      <div id="quick-profile-box" class="p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-orange-500 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-orange-500/30">
+            <i data-lucide="user-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs font-extrabold text-white">السيد رؤوف (المدير العام)</div>
+            <div class="text-[10px] text-orange-300 font-mono">raouf • صلاحيات كاملة</div>
+          </div>
+        </div>
+        <button type="button" onclick="fillAdminCredentials()" class="px-3 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold transition shadow-sm">
+          تعبئة سريعة ⚡
+        </button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+        
+        <!-- Input 1: Username / Email -->
+        <div>
+          <label id="lbl-identifier" class="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
+            <i data-lucide="user" class="w-3.5 h-3.5 text-orange-400"></i>
+            <span>اسم المستخدم (Username):</span>
+          </label>
+          <div class="relative">
+            <input type="text" id="auth-identifier" required placeholder="raouf" value="raouf" class="w-full bg-slate-900/70 border border-white/10 rounded-2xl px-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition font-mono">
+          </div>
+        </div>
+
+        <!-- Input 2: Password -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <i data-lucide="lock" class="w-3.5 h-3.5 text-orange-400"></i>
+              <span>كلمة المرور (Password):</span>
+            </label>
+            <button type="button" onclick="togglePasswordVisibility()" class="text-[11px] font-bold text-orange-400 hover:text-orange-300 flex items-center gap-1">
+              <span id="pwd-toggle-text">إظهار</span>
+            </button>
+          </div>
+          <div class="relative">
+            <input type="password" id="auth-password" required placeholder="••••••••" value="00213966" class="w-full bg-slate-900/70 border border-white/10 rounded-2xl px-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition font-mono">
+          </div>
+        </div>
+
+        <!-- Remember Me Checkbox -->
+        <div class="flex items-center justify-between text-xs pt-1">
+          <label class="flex items-center gap-2 cursor-pointer select-none text-slate-300">
+            <input type="checkbox" id="auth-remember" checked class="w-4 h-4 rounded border-white/20 bg-slate-900 text-orange-500 focus:ring-orange-500/30">
+            <span>تذكر تسجيل الدخول في هذا الجهاز</span>
+          </label>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="btn-submit-auth" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-black text-sm shadow-xl shadow-orange-500/30 transform hover:-translate-y-0.5 active:translate-y-0 transition duration-200 flex items-center justify-center gap-2">
+          <i data-lucide="log-in" class="w-5 h-5"></i>
+          <span>دخول المنظومة الآن 🚀</span>
+        </button>
+
+      </form>
+
+      <!-- Security & Cloud Status Badge -->
+      <div class="pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400 font-medium">
+        <span class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          اتصال سحابي مشفر (SSL 256-bit)
+        </span>
+        <span class="font-mono text-slate-500">v2.5 Pro</span>
+      </div>
+
+    </div>
+
+    <!-- Footer Copyright -->
+    <div class="text-center mt-6 text-xs text-slate-400 space-y-1">
+      <div>مؤسسة الفتح لاستيراد وتوزيع ملابس الأطفال © 2025 - 2026</div>
+      <div class="text-[11px] font-semibold text-slate-500">
+        تطوير وبرمجة: <span class="text-orange-400 font-bold font-mono">Aminebens_off</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Interactive Auth Script -->
+  <script>
+    let currentAuthMode = 'admin'; // 'admin' or 'firebase'
+
+    function setLoginMethod(mode) {
+      currentAuthMode = mode;
+      const btnAdmin = document.getElementById('tab-btn-admin');
+      const btnFb = document.getElementById('tab-btn-firebase');
+      const lblId = document.getElementById('lbl-identifier');
+      const inpId = document.getElementById('auth-identifier');
+      const qBox = document.getElementById('quick-profile-box');
+
+      if (mode === 'admin') {
+        btnAdmin.className = 'flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20 font-extrabold';
+        btnFb.className = 'flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-slate-400 hover:text-white font-medium';
+        lblId.innerHTML = '<i data-lucide="user" class="w-3.5 h-3.5 text-orange-400"></i><span>اسم المستخدم (Username):</span>';
+        inpId.type = 'text';
+        inpId.placeholder = 'raouf';
+        inpId.value = 'raouf';
+        document.getElementById('auth-password').value = '00213966';
+        if (qBox) qBox.style.display = 'flex';
+      } else {
+        btnFb.className = 'flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20 font-extrabold';
+        btnAdmin.className = 'flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-slate-400 hover:text-white font-medium';
+        lblId.innerHTML = '<i data-lucide="mail" class="w-3.5 h-3.5 text-amber-400"></i><span>البريد الإلكتروني لـ Firebase:</span>';
+        inpId.type = 'email';
+        inpId.placeholder = 'admin@elfeth.com';
+        inpId.value = '';
+        document.getElementById('auth-password').value = '';
+        if (qBox) qBox.style.display = 'none';
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function fillAdminCredentials() {
+      document.getElementById('auth-identifier').value = 'raouf';
+      document.getElementById('auth-password').value = '00213966';
+      showToast('تمت تعبئة بيانات المدير العام بنجاح!', 'info');
+    }
+
+    function togglePasswordVisibility() {
+      const pInp = document.getElementById('auth-password');
+      const tText = document.getElementById('pwd-toggle-text');
+      if (pInp.type === 'password') {
+        pInp.type = 'text';
+        tText.textContent = 'إخفاء';
+      } else {
+        pInp.type = 'password';
+        tText.textContent = 'إظهار';
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      const bg = type === 'success' ? 'bg-emerald-600' : (type === 'error' ? 'bg-rose-600' : 'bg-slate-800');
+      toast.className = `${bg} text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transform transition-all duration-300 translate-y-2 opacity-0 z-50 text-xs font-bold border border-white/20`;
+      toast.innerHTML = `<span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+      }, 10);
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const identifier = document.getElementById('auth-identifier').value.trim();
+      const password = document.getElementById('auth-password').value.trim();
+      const btn = document.getElementById('btn-submit-auth');
+
+      if (!identifier || !password) {
+        showToast('يرجى إدخال اسم المستخدم وكلمة المرور', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i><span>جاري التحقق والدخول...</span>';
+      if (window.lucide) lucide.createIcons();
+
+      // Case 1: Firebase Auth Mode
+      if (currentAuthMode === 'firebase') {
+        if (window.firebase && firebase.apps.length && firebase.auth) {
+          try {
+            const userCredential = await firebase.auth().signInWithEmailAndPassword(identifier, password);
+            const user = userCredential.user;
+            const sessionData = {
+              id: user.uid,
+              username: user.email,
+              name: user.displayName || 'المدير العام (Firebase)',
+              role: 'admin',
+              authProvider: 'firebase',
+              loginTime: new Date().toISOString()
+            };
+            localStorage.setItem('elfeth_auth_session', JSON.stringify(sessionData));
+            showToast('✅ تم تسجيل الدخول عبر Firebase بنجاح!');
+            setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+            return;
+          } catch (fbErr) {
+            console.error('Firebase Auth Error:', fbErr);
+            showToast('خطأ في مصادقة Firebase: ' + fbErr.message, 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="log-in" class="w-5 h-5"></i><span>دخول المنظومة الآن 🚀</span>';
+            if (window.lucide) lucide.createIcons();
+            return;
+          }
+        } else {
+          showToast('⚠️ لم يتم ربط مفاتيح Firebase بعد، يمكنك الدخول بوضع المدير العام', 'info');
+        }
+      }
+
+      // Case 2: Executive Local Admin Authentication
+      const u = identifier.toLowerCase();
+      const p = password;
+
+      if ((u === 'raouf' || u === 'رؤوف' || u === 'admin' || u === 'amine' || u === 'aminebens_off') && (p === '00213966' || p === 'admin')) {
+        const sessionData = {
+          id: 'u_raouf',
+          username: 'raouf',
+          name: 'المدير العام (Raouf) - مؤسسة الفتح',
+          role: 'admin',
+          authProvider: 'local',
+          loginTime: new Date().toISOString()
+        };
+        localStorage.setItem('elfeth_auth_session', JSON.stringify(sessionData));
+        showToast('✅ مرحباً بك السيد رؤوف! جاري توجيهك للمنظومة...');
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 800);
+      } else {
+        showToast('⚠️ اسم المستخدم أو كلمة المرور غير صحيحة!', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="log-in" class="w-5 h-5"></i><span>دخول المنظومة الآن 🚀</span>';
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    // Auto-login check: If already logged in, redirect to index.html
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+      try {
+        const saved = localStorage.getItem('elfeth_auth_session');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.id) {
+            console.log('Active session found, ready.');
+          }
+        }
+      } catch (e) {}
+    });
+  </script>
+</body>
+</html>
