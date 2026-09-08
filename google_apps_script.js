@@ -242,7 +242,7 @@ function buildMatrixSettlementSheet(sheet, data) {
     dataRange.setValues(matRows);
     dataRange.setFontSize(10);
     sheet.getRange(matrixStartRow + 1, 1, matRows.length, 1).setFontWeight("bold").setBackground("#f8fafc");
-    sheet.getRange(matrixStartRow + 1, 2, matRows.length, 5).setNumberFormat('#,##0.00;(#,##0.00);""');
+    sheet.getRange(matrixStartRow + 1, 2, matRows.length, 5).setNumberFormat("#,##0.00;(#,##0.00)");
   }
 
   var curMatRow = matrixStartRow + 1 + matRows.length;
@@ -258,7 +258,7 @@ function buildMatrixSettlementSheet(sheet, data) {
   ];
   sheet.getRange(curMatRow, 1, 1, matHeaders.length).setValues([totInvRow])
     .setFontWeight("bold").setFontSize(10).setBackground("#e2e8f0");
-  sheet.getRange(curMatRow, 2, 1, 5).setNumberFormat('#,##0.00;(#,##0.00);"0.00"');
+  sheet.getRange(curMatRow, 2, 1, 5).setNumberFormat("#,##0.00;(#,##0.00)");
   sheet.setRowHeight(curMatRow, 28);
   curMatRow += 2; // Gap
 
@@ -310,7 +310,7 @@ function buildMatrixSettlementSheet(sheet, data) {
   var orangeRange = sheet.getRange(curMatRow, 1, 1, matHeaders.length);
   orangeRange.setValues([orangeRow]).setFontWeight("black").setFontSize(11).setBackground("#f97316").setFontColor("#000000").setHorizontalAlignment("center");
   sheet.getRange(curMatRow, 6).setBackground("#ef4444").setFontColor("#ffffff");
-  sheet.getRange(curMatRow, 2, 1, 5).setNumberFormat('#,##0.00;(#,##0.00);"0.00"');
+  sheet.getRange(curMatRow, 2, 1, 5).setNumberFormat("#,##0.00;(#,##0.00)");
   sheet.setRowHeight(curMatRow, 30);
   curMatRow++;
 
@@ -345,7 +345,7 @@ function buildMatrixSettlementSheet(sheet, data) {
   ];
   var dzdRange = sheet.getRange(curMatRow, 1, 1, matHeaders.length);
   dzdRange.setValues([dzdRow]).setFontWeight("black").setFontSize(11).setBackground("#f1f5f9").setHorizontalAlignment("center");
-  sheet.getRange(curMatRow, 2, 1, 5).setNumberFormat('#,##0 "د.ج";(#,##0 "د.ج");"0 د.ج"');
+  sheet.getRange(curMatRow, 2, 1, 5).setNumberFormat("#,##0 د.ج");
   sheet.setRowHeight(curMatRow, 32);
 
   // Styling & Auto sizing
@@ -390,21 +390,21 @@ function buildDashboardSheet(sheet, data, syncTimestamp) {
   var totPayUsd = (data.supplierPayments || []).reduce(function(acc, p){ return acc + (Number(p.totalPaidUsd) || 0); }, 0);
   var remainingDebtUsd = totInvUsd - totPayUsd;
 
-  sheet.getRange("A5").setValue(totCol).setNumberFormat('#,##0 "د.ج"');
-  sheet.getRange("B5").setValue(totForexDzd).setNumberFormat('#,##0 "د.ج"');
-  sheet.getRange("C5").setValue(restCashDzd).setNumberFormat('#,##0 "د.ج"');
+  sheet.getRange("A5").setValue(totCol).setNumberFormat("#,##0 د.ج");
+  sheet.getRange("B5").setValue(totForexDzd).setNumberFormat("#,##0 د.ج");
+  sheet.getRange("C5").setValue(restCashDzd).setNumberFormat("#,##0 د.ج");
 
-  sheet.getRange("D5").setValue(totEurBought).setNumberFormat('"€"#,##0.00');
-  sheet.getRange("E5").setValue(totEurPaid).setNumberFormat('"€"#,##0.00');
-  sheet.getRange("F5").setValue(restEur).setNumberFormat('"€"#,##0.00');
+  sheet.getRange("D5").setValue(totEurBought).setNumberFormat("€#,##0.00");
+  sheet.getRange("E5").setValue(totEurPaid).setNumberFormat("€#,##0.00");
+  sheet.getRange("F5").setValue(restEur).setNumberFormat("€#,##0.00");
 
-  sheet.getRange("G5").setValue(totUsdBought).setNumberFormat('"$"#,##0.00');
-  sheet.getRange("H5").setValue(totUsdPaidDirect).setNumberFormat('"$"#,##0.00');
-  sheet.getRange("I5").setValue(restUsd).setNumberFormat('"$"#,##0.00');
+  sheet.getRange("G5").setValue(totUsdBought).setNumberFormat("$#,##0.00");
+  sheet.getRange("H5").setValue(totUsdPaidDirect).setNumberFormat("$#,##0.00");
+  sheet.getRange("I5").setValue(restUsd).setNumberFormat("$#,##0.00");
 
-  sheet.getRange("J5").setValue(totInvUsd).setNumberFormat('"$"#,##0.00');
-  sheet.getRange("K5").setValue(totPayUsd).setNumberFormat('"$"#,##0.00');
-  sheet.getRange("L5").setValue(remainingDebtUsd).setNumberFormat('"$"#,##0.00');
+  sheet.getRange("J5").setValue(totInvUsd).setNumberFormat("$#,##0.00");
+  sheet.getRange("K5").setValue(totPayUsd).setNumberFormat("$#,##0.00");
+  sheet.getRange("L5").setValue(remainingDebtUsd).setNumberFormat("$#,##0.00");
 
   sheet.getRange("A5:L5").setFontWeight("bold").setFontSize(11).setHorizontalAlignment("center").setBackground("#f8fafc");
   sheet.getRange("C5").setFontColor("#059669");
@@ -437,9 +437,9 @@ function buildDashboardSheet(sheet, data, syncTimestamp) {
     var brRange = sheet.getRange(9, 1, branchRows.length, brSub.length);
     brRange.setValues(branchRows);
     brRange.setFontSize(10);
-    sheet.getRange(9, 2, branchRows.length, 3).setNumberFormat('#,##0 "د.ج"');
-    sheet.getRange(9, 5, branchRows.length, 3).setNumberFormat('"$"#,##0.00');
-    sheet.getRange(9, 8, branchRows.length, 1).setNumberFormat('#,##0 "د.ج"');
+    sheet.getRange(9, 2, branchRows.length, 3).setNumberFormat("#,##0 د.ج");
+    sheet.getRange(9, 5, branchRows.length, 3).setNumberFormat("$#,##0.00");
+    sheet.getRange(9, 8, branchRows.length, 1).setNumberFormat("#,##0 د.ج");
   }
 
   sheet.autoResizeColumns(1, 12);
@@ -478,7 +478,7 @@ function buildCollectionsSheet(sheet, collections, branches) {
     sheet.getRange(totIdx, 1, 1, 3).merge().setValue("المجموع الكلي للمقبوضات").setFontWeight("bold");
     sheet.getRange(totIdx, 4).setFormula("=SUM(D2:D" + (totIdx - 1) + ")");
     sheet.getRange(totIdx, 1, 1, headers.length).setBackground("#ecfdf5").setFontWeight("bold");
-    sheet.getRange(totIdx, 4).setNumberFormat('#,##0 "د.ج"');
+    sheet.getRange(totIdx, 4).setNumberFormat("#,##0 د.ج");
   }
 
   sheet.autoResizeColumns(1, headers.length);
@@ -565,26 +565,26 @@ function buildForexSheet(sheet, forex, branches, brokers) {
     var range = sheet.getRange(2, 1, rows.length, headers.length);
     range.setValues(rows);
     range.setFontSize(10).setVerticalAlignment("middle");
-    sheet.getRange(2, 5, rows.length, 1).setNumberFormat('"€"#,##0.00');
-    sheet.getRange(2, 6, rows.length, 1).setNumberFormat('"$"#,##0.00');
-    sheet.getRange(2, 7, rows.length, 1).setNumberFormat('#,##0.00 "د.ج"');
-    sheet.getRange(2, 8, rows.length, 3).setNumberFormat('#,##0 "د.ج"');
-    sheet.getRange(2, 12, rows.length, 5).setNumberFormat('#,##0 "د.ج"');
+    sheet.getRange(2, 5, rows.length, 1).setNumberFormat("€#,##0.00");
+    sheet.getRange(2, 6, rows.length, 1).setNumberFormat("$#,##0.00");
+    sheet.getRange(2, 7, rows.length, 1).setNumberFormat("#,##0.00 د.ج");
+    sheet.getRange(2, 8, rows.length, 3).setNumberFormat("#,##0 د.ج");
+    sheet.getRange(2, 12, rows.length, 5).setNumberFormat("#,##0 د.ج");
 
     var totIdx = 2 + rows.length;
     sheet.getRange(totIdx, 1, 1, 4).merge().setValue("المجموع الكلي").setFontWeight("bold").setHorizontalAlignment("center");
-    sheet.getRange(totIdx, 5).setValue(sumEur).setNumberFormat('"€"#,##0.00');
-    sheet.getRange(totIdx, 6).setValue(sumUsd).setNumberFormat('"$"#,##0.00');
+    sheet.getRange(totIdx, 5).setValue(sumEur).setNumberFormat("€#,##0.00");
+    sheet.getRange(totIdx, 6).setValue(sumUsd).setNumberFormat("$#,##0.00");
     sheet.getRange(totIdx, 7).setValue("");
-    sheet.getRange(totIdx, 8).setValue(sumTotalDzd).setNumberFormat('#,##0 "د.ج"');
-    sheet.getRange(totIdx, 9).setValue(sumPaidDzd).setNumberFormat('#,##0 "د.ج"');
-    sheet.getRange(totIdx, 10).setValue(sumDebtDzd).setNumberFormat('#,##0 "د.ج"');
+    sheet.getRange(totIdx, 8).setValue(sumTotalDzd).setNumberFormat("#,##0 د.ج");
+    sheet.getRange(totIdx, 9).setValue(sumPaidDzd).setNumberFormat("#,##0 د.ج");
+    sheet.getRange(totIdx, 10).setValue(sumDebtDzd).setNumberFormat("#,##0 د.ج");
     sheet.getRange(totIdx, 11).setValue("");
-    sheet.getRange(totIdx, 12).setValue(sumOgx).setNumberFormat('#,##0 "د.ج"');
-    sheet.getRange(totIdx, 13).setValue(sumBatna).setNumberFormat('#,##0 "د.ج"');
-    sheet.getRange(totIdx, 14).setValue(sumBlida).setNumberFormat('#,##0 "د.ج"');
-    sheet.getRange(totIdx, 15).setValue(sumOran).setNumberFormat('#,##0 "د.ج"');
-    sheet.getRange(totIdx, 16).setValue(sumRest).setNumberFormat('#,##0 "د.ج"');
+    sheet.getRange(totIdx, 12).setValue(sumOgx).setNumberFormat("#,##0 د.ج");
+    sheet.getRange(totIdx, 13).setValue(sumBatna).setNumberFormat("#,##0 د.ج");
+    sheet.getRange(totIdx, 14).setValue(sumBlida).setNumberFormat("#,##0 د.ج");
+    sheet.getRange(totIdx, 15).setValue(sumOran).setNumberFormat("#,##0 د.ج");
+    sheet.getRange(totIdx, 16).setValue(sumRest).setNumberFormat("#,##0 د.ج");
     sheet.getRange(totIdx, 17).setValue("");
 
     sheet.getRange(totIdx, 1, 1, headers.length).setBackground("#eff6ff").setFontWeight("bold");
@@ -634,7 +634,7 @@ function buildBrokerPaymentsSheet(sheet, brokerPayments, brokers, branches) {
 
     var totIdx = 2 + rows.length;
     sheet.getRange(totIdx, 1, 1, 3).merge().setValue("إجمالي تسديدات ديون الصرافين").setFontWeight("bold").setHorizontalAlignment("center");
-    sheet.getRange(totIdx, 4).setValue(sumPaid).setNumberFormat('#,##0 "د.ج"');
+    sheet.getRange(totIdx, 4).setValue(sumPaid).setNumberFormat("#,##0 د.ج");
     sheet.getRange(totIdx, 5, 1, 3).setValue("");
     sheet.getRange(totIdx, 1, 1, headers.length).setBackground("#fef3c7").setFontWeight("bold");
   }
@@ -689,15 +689,15 @@ function buildInvoicesSheet(sheet, invoices, suppliers, branches) {
     var range = sheet.getRange(2, 1, rows.length, headers.length);
     range.setValues(rows);
     range.setFontSize(10).setVerticalAlignment("middle");
-    sheet.getRange(2, 6, rows.length, 5).setNumberFormat('"$"#,##0.00');
+    sheet.getRange(2, 6, rows.length, 5).setNumberFormat("$#,##0.00");
 
     var totIdx = 2 + rows.length;
     sheet.getRange(totIdx, 1, 1, 5).merge().setValue("المجموع الكلي لفواتير المصانع (USD)").setFontWeight("bold");
-    sheet.getRange(totIdx, 6).setValue(sumInv).setNumberFormat('"$"#,##0.00');
-    sheet.getRange(totIdx, 7).setValue(sumOgx).setNumberFormat('"$"#,##0.00');
-    sheet.getRange(totIdx, 8).setValue(sumBatna).setNumberFormat('"$"#,##0.00');
-    sheet.getRange(totIdx, 9).setValue(sumBlida).setNumberFormat('"$"#,##0.00');
-    sheet.getRange(totIdx, 10).setValue(sumOran).setNumberFormat('"$"#,##0.00');
+    sheet.getRange(totIdx, 6).setValue(sumInv).setNumberFormat("$#,##0.00");
+    sheet.getRange(totIdx, 7).setValue(sumOgx).setNumberFormat("$#,##0.00");
+    sheet.getRange(totIdx, 8).setValue(sumBatna).setNumberFormat("$#,##0.00");
+    sheet.getRange(totIdx, 9).setValue(sumBlida).setNumberFormat("$#,##0.00");
+    sheet.getRange(totIdx, 10).setValue(sumOran).setNumberFormat("$#,##0.00");
 
     sheet.getRange(totIdx, 1, 1, headers.length).setBackground("#fdf2f8").setFontWeight("bold");
   }
@@ -774,21 +774,21 @@ function buildPaymentsSheet(sheet, payments, suppliers, branches) {
     var range = sheet.getRange(2, 1, rows.length, headers.length);
     range.setValues(rows);
     range.setFontSize(10).setVerticalAlignment("middle");
-    sheet.getRange(2, 4, rows.length, 1).setNumberFormat('"€"#,##0.00'); // عمود المسدد بالأورو
-    sheet.getRange(2, 5, rows.length, 2).setNumberFormat('"$"#,##0.00'); // عمود المسدد بالدولار + Remise
-    sheet.getRange(2, 7, rows.length, 5).setNumberFormat('"$"#,##0.00');
+    sheet.getRange(2, 4, rows.length, 1).setNumberFormat("€#,##0.00"); // عمود المسدد بالأورو
+    sheet.getRange(2, 5, rows.length, 2).setNumberFormat("$#,##0.00"); // عمود المسدد بالدولار + Remise
+    sheet.getRange(2, 7, rows.length, 5).setNumberFormat("$#,##0.00");
 
     var totIdx = 2 + rows.length;
 
     sheet.getRange(totIdx, 1, 1, 3).merge().setValue("المجموع الكلي").setFontWeight("bold").setHorizontalAlignment("center");
-    sheet.getRange(totIdx, 4).setValue(sumEurPaid).setNumberFormat('"€"#,##0.00'); // مجموع الأورو
-    sheet.getRange(totIdx, 5).setValue(sumUsdPaid).setNumberFormat('"$"#,##0.00'); // مجموع الدولار
-    sheet.getRange(totIdx, 6).setValue(sumRemiseUsd).setNumberFormat('"$"#,##0.00'); // مجموع التخفيض Remise
-    sheet.getRange(totIdx, 7).setValue(sumTotalDeductedUsd).setNumberFormat('"$"#,##0.00'); // إجمالي المخصوم من الدين $
-    sheet.getRange(totIdx, 8).setValue(sumOgx).setNumberFormat('"$"#,##0.00');
-    sheet.getRange(totIdx, 9).setValue(sumBatna).setNumberFormat('"$"#,##0.00');
-    sheet.getRange(totIdx, 10).setValue(sumBlida).setNumberFormat('"$"#,##0.00');
-    sheet.getRange(totIdx, 11).setValue(sumOran).setNumberFormat('"$"#,##0.00');
+    sheet.getRange(totIdx, 4).setValue(sumEurPaid).setNumberFormat("€#,##0.00"); // مجموع الأورو
+    sheet.getRange(totIdx, 5).setValue(sumUsdPaid).setNumberFormat("$#,##0.00"); // مجموع الدولار
+    sheet.getRange(totIdx, 6).setValue(sumRemiseUsd).setNumberFormat("$#,##0.00"); // مجموع التخفيض Remise
+    sheet.getRange(totIdx, 7).setValue(sumTotalDeductedUsd).setNumberFormat("$#,##0.00"); // إجمالي المخصوم من الدين $
+    sheet.getRange(totIdx, 8).setValue(sumOgx).setNumberFormat("$#,##0.00");
+    sheet.getRange(totIdx, 9).setValue(sumBatna).setNumberFormat("$#,##0.00");
+    sheet.getRange(totIdx, 10).setValue(sumBlida).setNumberFormat("$#,##0.00");
+    sheet.getRange(totIdx, 11).setValue(sumOran).setNumberFormat("$#,##0.00");
     sheet.getRange(totIdx, 12, 1, 2).setValue("");
 
     sheet.getRange(totIdx, 1, 1, headers.length).setBackground("#f3e8ff").setFontWeight("bold");
